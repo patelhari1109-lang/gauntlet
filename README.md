@@ -1,8 +1,8 @@
 # Gauntlet — elimination scoreboard
 
 Fun-games event scoring for **8–10 teams**. Every team gets a score in every
-game, and at the end of each round the rules knock somebody out. Keep going
-until one team is left standing.
+game, and when you lock a game the rules knock somebody out. Keep going until
+one team is left standing.
 
 **Live:** https://patelhari1109-lang.github.io/gauntlet/
 
@@ -13,48 +13,44 @@ Single self-contained `index.html`. No build step, no framework, no bundler.
 ## The shape of an event
 
 ```
-Round 1   9 teams   →  lowest scorer out   →  8 teams
-Round 2   8 teams   →  lowest scorer out   →  7 teams
+Game 1   Tug of war   9 teams   →  lowest scorer out   →  8 teams
+Game 2   Quiz         8 teams   →  lowest scorer out   →  7 teams
 …
-Round 8   2 teams   →  lowest scorer out   →  champion 🏆
+Game 8   Musical mats 2 teams   →  lowest scorer out   →  champion 🏆
 ```
 
-A **round** holds one or more **games**. If your round is just one game, that is
-the simple case and the grid is one column wide. If Round 2 is a tug of war
-*and* a quiz, add both — a team's round score is the sum of its games.
+One flat list of games. Add them all up front or one at a time as the day goes
+on — locking a game creates the next one for you.
 
 ---
 
 ## What it does
 
 **Standings** — the champion banner once it's over, a podium, and a full
-survival grid: teams down the side, rounds across the top, every round score in
-its cell with 💀 marking where each team went out. Best and worst in each round
-are colour-coded, so a column reads at a glance. The **⛶** button strips the
-chrome and goes fullscreen for a projector.
+survival grid: teams down the side, games across the top, every score in its
+cell with 💀 marking where each team went out. Best and worst in each game are
+colour-coded, so a column reads at a glance. The **⛶** button strips the chrome
+and goes fullscreen for a projector.
 
-**Rounds** — a card per round. Open one to get the score grid: teams down,
-games across, a live round total on the right. While a round is open the teams
-currently in the drop zone are highlighted in red, and the standings page shows
-the same "on the chopping block" line — so the room can see who needs a big
-score in the last game.
+**Games** — a card per game, listing every surviving team with its score and
+big `−` / `+` buttons. Rows sort live into running order with a position number,
+so the standing of the game is visible as you enter it. Teams currently in the
+drop zone are highlighted red, and the standings page shows the same "on the
+chopping block" line — so the room can see who needs a big score.
 
-Tap any game's header for a **one-game scorer**: that game alone, full screen,
-one row per team with big `−` / `+` buttons. Far better than a grid on a phone
-while you're standing next to a tug-of-war rope.
+**Full screen** gives you that same list with nothing else on it, which is what
+you want on a phone while standing next to a tug-of-war rope. `Enter` moves to
+the next team, the way you actually read scores off a sheet.
 
-Pressing `Enter` in a score cell moves down the column, the way you actually
-read scores off a sheet.
+**Locking a game** is the one thing that always asks first. The dialog shows the
+full order worst-first, pre-ticks whoever the rules pick, and lets you overrule
+it — for a tie, a disqualification, or a judged game where the number isn't the
+whole story. Tie on the cut line? It says so rather than quietly picking one. It
+also warns you if anyone still has blank scores, and it will never let you
+eliminate the last team standing.
 
-**Locking a round** is the one thing that always asks first. The dialog shows
-the full round order worst-first, pre-ticks whoever the rules pick, and lets you
-overrule it — for a tie, a disqualification, or a judged game where the number
-isn't the whole story. Tie on the cut line? It says so rather than quietly
-picking one. It also warns you if anyone still has blank scores, and it will
-never let you eliminate the last team standing.
-
-Locked a round too early? **Reopen** puts the teams back in and makes the
-scores editable again.
+Locked a game too early? **Reopen** puts the teams back in and makes the scores
+editable again.
 
 **Teams** — add them one at a time or paste a list, one per line. Badge emoji,
 colour, member names. Removing a team takes its scores with it.
@@ -63,21 +59,25 @@ colour, member names. Removing a team takes its scores with it.
 
 | Setting | Options | Default |
 | --- | --- | --- |
-| Who goes out | lowest score **that round** · lowest **running total** | that round |
+| Who goes out | lowest score **that game** · lowest **running total** | that game |
 | Scoring direction | high score wins · low score wins (times, penalties) | high wins |
-| Eliminated per round | 0–5 | 1 |
+| Eliminated per game | 0–5 | 1 |
 
 Every number on the board is *derived* from the score cells — nothing is stored
-twice. Change a rule, or fix a typo from three rounds ago, and the whole event
+twice. Change a rule, or fix a typo from three games ago, and the whole event
 re-ranks instantly.
+
+Deleting a game renumbers the ones after it, brings back whoever it knocked out,
+and shifts every later elimination down with the numbering, so the survival grid
+never points at the wrong game.
 
 ---
 
 ## Ranking
 
 Alive teams rank above eliminated ones. Among the eliminated, **surviving
-longer beats scoring big and leaving early** — a team knocked out in round 6
-finishes above one that posted a huge round 1 and went out in round 2. That is
+longer beats scoring big and leaving early** — a team knocked out on game 6
+finishes above one that posted a huge game 1 and went out on game 2. That is
 what an elimination event actually rewards. Score breaks ties inside each group.
 
 ---
@@ -107,7 +107,8 @@ returns. Rapid taps on one cell coalesce into a single write.
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. Open **`supabase-setup.sql`** in this repo. **Change the passcode on the last
-   line** — that is what your scorers will type in.
+   line** — that is what your scorers will type in. It is safe to re-run, and it
+   upgrades an install of the earlier rounds-based version in place.
 3. In Supabase: **SQL Editor → New query**, paste the whole file, **Run**.
 4. In the app: **Settings → Shared database**. Paste your **Project URL** and
    **anon public key** (Supabase → Project Settings → API), plus the passcode.
@@ -154,13 +155,16 @@ cd ~/projects/gauntlet
 /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc test.js
 ```
 
-208 assertions covering the scoring engine, every elimination rule, lock and
-reopen round-trips, a full five-round event, deletion cleanup, database row
-mapping, and a render pass over every view that catches stray `undefined`s and
-unclosed tags.
+230 assertions covering the scoring engine, every elimination rule, lock and
+reopen round-trips, a full event played end to end, the renumbering that follows
+a deleted game, upgrading a saved v1 (rounds-based) event, database row mapping,
+and a render pass over every view that catches stray `undefined`s and unclosed
+tags.
 
 The SQL is validated by running `supabase-setup.sql` against a throwaway
-`postgres:16` container and exercising every function as the `anon` role.
+`postgres:16` container and exercising every function as the `anon` role — both
+as a fresh install and on top of a populated v1 database, checking that the
+upgrade lands each elimination on the right game.
 
 ---
 

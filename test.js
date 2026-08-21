@@ -66,14 +66,14 @@ var html = readFile('index.html');
 var open = html.indexOf('<script>') + '<script>'.length;
 var shut = html.lastIndexOf('</script>');
 var src  = html.slice(open, shut);
-(new Function(src + '\nthis.__api = { state: state, migrate: migrate, roundScore: roundScore,' +
-  ' totalScore: totalScore, standings: standings, roundOrder: roundOrder, elimPreview: elimPreview,' +
-  ' lockRound: lockRound, unlockRound: unlockRound, addRound: addRound, addGame: addGame,' +
-  ' delGame: delGame, delTeam: delTeam, delRound: delRound, setCell: setCell, cell: cell,' +
-  ' inRound: inRound, alive: alive, rounds: rounds, gamesOf: gamesOf, teamPayload: teamPayload,' +
-  ' rowToTeam: rowToTeam, roundPayload: roundPayload, rowToRound: rowToRound,' +
-  ' vBoard: vBoard, vRounds: vRounds, vTeams: vTeams, vSettings: vSettings,' +
-  ' roundCard: roundCard, lockModal: lockModal, openScorer: openScorer,' +
+(new Function(src + '\nthis.__api = { migrate: migrate, gameScore: gameScore, totalScore: totalScore,' +
+  ' standings: standings, gameOrder: gameOrder, elimPreview: elimPreview,' +
+  ' lockGame: lockGame, unlockGame: unlockGame, addGame: addGame, delGame: delGame,' +
+  ' delTeam: delTeam, setCell: setCell, cell: cell, inGame: inGame, alive: alive,' +
+  ' games: games, teamPayload: teamPayload, rowToTeam: rowToTeam,' +
+  ' gamePayload: gamePayload, rowToGame: rowToGame,' +
+  ' vBoard: vBoard, vGames: vGames, vTeams: vTeams, vSettings: vSettings,' +
+  ' gameCard: gameCard, lockModal: lockModal, openScorer: openScorer,' +
   ' getModal: function(){ return document.querySelector("#modal").innerHTML; },' +
   ' getScorer: function(){ return document.querySelector("#scorer").innerHTML; },' +
   ' setState: function(s){ state = s; }, getState: function(){ return state; } };'))
@@ -93,12 +93,12 @@ function eq(a, b, what){
   else { fail++; print('  ✗ [' + group + '] ' + what + '\n      got ' + sa + '\n      want ' + sb); }
 }
 
-/* Build a fresh event: n teams, no rounds. */
+/* Build a fresh event: n teams, no games. */
 function fresh(n, rules){
   var s = {
-    version: 1, event: { name: 'T', tagline: '' },
-    rules: { basis: 'round', perRound: 1, direction: 'high', confirm: true },
-    teams: [], rounds: [], games: [], scores: {}
+    version: 2, event: { name: 'T', tagline: '' },
+    rules: { basis: 'game', perGame: 1, direction: 'high', confirm: true },
+    teams: [], games: [], scores: {}
   };
   for (var k in (rules || {})) s.rules[k] = rules[k];
   for (var i = 0; i < n; i++)
@@ -106,12 +106,11 @@ function fresh(n, rules){
   A.setState(s);
   return s;
 }
-/* One round with one game, scores given in team order. */
-function playRound(scores, name){
-  var r = A.addRound(name);
-  var g = A.addGame(r.id, 'G' + r.idx, '');
+/* One game, scores given in team order (null leaves a team unscored). */
+function play(scores, name){
+  var g = A.addGame(name || null, '');
   scores.forEach(function(v, i){ if (v != null) A.setCell(g.id, 't' + i, v); });
-  return { r: r, g: g };
+  return g;
 }
 
 print('');
@@ -122,42 +121,31 @@ print('───────────────────');
 G('scoring');
 (function(){
   fresh(4);
-  var r = A.addRound('R1');
-  var g1 = A.addGame(r.id, 'Quiz', ''), g2 = A.addGame(r.id, 'Relay', '');
-  A.setCell(g1.id, 't0', 10); A.setCell(g2.id, 't0', 5);
-  A.setCell(g1.id, 't1', 7);
+  var g = play([10, null, 0, 2.5]);
 
-  eq(A.roundScore(r, 't0').v, 15, 'round score sums the games in the round');
-  eq(A.roundScore(r, 't0').filled, 2, 'filled counts only cells with a number');
-  eq(A.roundScore(r, 't1').of, 2, 'of counts every game in the round');
-  eq(A.roundScore(r, 't1').filled, 1, 'a blank cell is not counted as filled');
-  eq(A.roundScore(r, 't2').any, false, 'a team with no cells has scored nothing');
-  eq(A.roundScore(r, 't2').v, 0, 'no cells sums to zero');
+  eq(A.gameScore(g, 't0').v, 10, 'a team’s game score is its cell');
+  eq(A.gameScore(g, 't1').any, false, 'a blank cell means the team has not played');
+  eq(A.gameScore(g, 't1').v, 0, 'and reads as zero when summed');
+  eq(A.gameScore(g, 't2').any, true, 'a zero is a real score, not a blank');
+  eq(A.gameScore(g, 't3').v, 2.5, 'decimal scores survive');
 
-  A.setCell(g1.id, 't1', null);
-  eq(A.cell(g1.id, 't1'), null, 'a null clears the cell');
-  eq(A.roundScore(r, 't1').any, false, 'clearing the last cell makes the team unscored');
+  A.setCell(g.id, 't0', null);
+  eq(A.cell(g.id, 't0'), null, 'a null clears the cell');
+  eq(A.gameScore(g, 't0').any, false, 'and the team is unscored again');
 
-  A.setCell(g1.id, 't1', 0);
-  eq(A.cell(g1.id, 't1'), 0, 'zero is a real score, not a blank');
-  eq(A.roundScore(r, 't1').any, true, 'a zero counts as having played');
-
-  A.setCell(g1.id, 't2', 2.5);
-  eq(A.roundScore(r, 't2').v, 2.5, 'decimal scores survive');
-
-  var r2 = A.addRound('R2');
-  var g3 = A.addGame(r2.id, 'Darts', '');
-  A.setCell(g3.id, 't0', 4);
-  eq(A.totalScore('t0'), 19, 'total adds every round');
-  eq(A.totalScore('t0', 1), 15, 'total can be capped at a round index');
+  A.setCell(g.id, 't0', 10);
+  var g2 = play([4, 0, 0, 0]);
+  eq(A.totalScore('t0'), 14, 'the total adds every game');
+  eq(A.totalScore('t0', 1), 10, 'the total can be capped at a game index');
+  eq(A.games().map(function(x){ return x.idx; }), [1, 2], 'games are numbered in play order');
 })();
 
 /* ------------------------------------------------------------ elimination */
-G('elimination — lowest that round');
+G('elimination — lowest that game');
 (function(){
   fresh(5);
-  var x = playRound([50, 10, 30, 20, 40]);
-  var p = A.elimPreview(x.r);
+  var g = play([50, 10, 30, 20, 40]);
+  var p = A.elimPreview(g);
   eq(p.order.map(function(o){ return o.t.id; }), ['t0','t4','t2','t3','t1'], 'order runs best to worst');
   eq(p.picks.map(function(o){ return o.t.id; }), ['t1'], 'the lowest scorer is picked');
   eq(p.n, 1, 'one team goes out by default');
@@ -168,8 +156,8 @@ G('elimination — lowest that round');
 G('elimination — low score wins');
 (function(){
   fresh(5, { direction: 'low' });
-  var x = playRound([50, 10, 30, 20, 40]);
-  var p = A.elimPreview(x.r);
+  var g = play([50, 10, 30, 20, 40]);
+  var p = A.elimPreview(g);
   eq(p.order[0].t.id, 't1', 'with low-wins the smallest score leads');
   eq(p.picks.map(function(o){ return o.t.id; }), ['t0'], 'with low-wins the biggest score goes out');
 })();
@@ -177,48 +165,40 @@ G('elimination — low score wins');
 G('elimination — running total');
 (function(){
   fresh(3, { basis: 'total' });
-  var a = playRound([100, 1, 50]);
-  A.lockRound(a.r, []);                       // lock without eliminating anyone
-  var b = playRound([0, 90, 10]);
-  var p = A.elimPreview(b.r);
+  var a = play([100, 1, 50]);
+  A.lockGame(a, []);                          // lock without eliminating anyone
+  var b = play([0, 90, 10]);
+  var p = A.elimPreview(b);
   eq(p.order.map(function(o){ return o.t.id; }), ['t0','t1','t2'], 'totals carry the early lead forward');
   eq(p.picks.map(function(o){ return o.t.id; }), ['t2'], 'lowest running total goes out');
 
-  // the same scores judged round-by-round pick a different victim
-  A.getState().rules.basis = 'round';
-  eq(A.elimPreview(b.r).picks.map(function(o){ return o.t.id; }), ['t0'],
+  A.getState().rules.basis = 'game';
+  eq(A.elimPreview(b).picks.map(function(o){ return o.t.id; }), ['t0'],
      'switching the basis re-picks without touching a single score');
 })();
 
 G('elimination — ties and headcount');
 (function(){
   fresh(4);
-  var x = playRound([9, 5, 5, 7]);
-  var p = A.elimPreview(x.r);
-  eq(p.tie, true, 'a tie on the cut line is flagged');
+  eq(A.elimPreview(play([9, 5, 5, 7])).tie, true, 'a tie on the cut line is flagged');
 
-  fresh(4);
-  A.getState().rules.perRound = 2;
-  var y = playRound([9, 5, 3, 7]);
-  eq(A.elimPreview(y.r).picks.map(function(o){ return o.t.id; }), ['t2','t1'], 'two out per round, worst first');
+  fresh(4, { perGame: 2 });
+  eq(A.elimPreview(play([9, 5, 3, 7])).picks.map(function(o){ return o.t.id; }), ['t2','t1'],
+     'two out per game, worst first');
 
-  fresh(2);
-  A.getState().rules.perRound = 3;
-  var z = playRound([9, 5]);
-  eq(A.elimPreview(z.r).n, 1, 'never takes more than all-but-one');
+  fresh(2, { perGame: 3 });
+  eq(A.elimPreview(play([9, 5])).n, 1, 'never takes more than all-but-one');
 
   fresh(1);
-  A.getState().rules.perRound = 1;
-  var w = playRound([9]);
-  eq(A.elimPreview(w.r).n, 0, 'the last team standing can never be eliminated');
-  eq(A.elimPreview(w.r).picks.length, 0, 'and nobody is picked');
+  var solo = A.elimPreview(play([9]));
+  eq(solo.n, 0, 'the last team standing can never be eliminated');
+  eq(solo.picks.length, 0, 'and nobody is picked');
 })();
 
 G('elimination — unscored teams');
 (function(){
   fresh(4);
-  var x = playRound([10, 20, null, null]);
-  var p = A.elimPreview(x.r);
+  var p = A.elimPreview(play([10, 20, null, null]));
   eq(p.unscored, 2, 'unscored teams are counted for the warning');
   eq(p.order.map(function(o){ return o.t.id; }).slice(0, 2), ['t1','t0'],
      'unscored teams count as zero and sink below everyone who played');
@@ -227,68 +207,66 @@ G('elimination — unscored teams');
 })();
 
 /* -------------------------------------------------------- lock and unlock */
-G('locking a round');
+G('locking a game');
 (function(){
   fresh(4);
-  var x = playRound([40, 10, 30, 20]);
-  A.lockRound(x.r, ['t1']);
+  var g = play([40, 10, 30, 20]);
+  A.lockGame(g, ['t1']);
 
-  eq(A.getState().teams[1].out, 1, 'the eliminated team records the round it went out in');
-  eq(x.r.status, 'done', 'the round is marked done');
-  eq(x.r.elim, ['t1'], 'the round remembers who it knocked out');
-  ok(x.r.lockedAt > 0, 'a lock timestamp is written');
+  eq(A.getState().teams[1].out, 1, 'the eliminated team records the game it went out on');
+  eq(g.status, 'done', 'the game is marked done');
+  eq(g.elim, ['t1'], 'the game remembers who it knocked out');
+  ok(g.lockedAt > 0, 'a lock timestamp is written');
   eq(A.alive().length, 3, 'three teams survive');
-  eq(A.rounds().length, 2, 'the next round is created automatically');
-  eq(A.rounds()[1].idx, 2, 'and it is numbered 2');
+  eq(A.games().length, 2, 'the next game is created automatically');
+  eq(A.games()[1].idx, 2, 'and it is numbered 2');
 
-  var r2 = A.rounds()[1];
-  eq(A.inRound(A.getState().teams[1], r2), false, 'an eliminated team is not in the next round');
-  eq(A.inRound(A.getState().teams[1], x.r), true, 'but is still in the round it played');
-  eq(A.roundOrder(r2).length, 3, 'the next round only ranks survivors');
+  var g2 = A.games()[1];
+  eq(A.inGame(A.getState().teams[1], g2), false, 'an eliminated team is not in the next game');
+  eq(A.inGame(A.getState().teams[1], g), true, 'but is still in the game it played');
+  eq(A.gameOrder(g2).length, 3, 'the next game only ranks survivors');
 })();
 
-G('reopening a round');
+G('reopening a game');
 (function(){
   fresh(4);
-  var x = playRound([40, 10, 30, 20]);
-  A.lockRound(x.r, ['t1']);
-  var before = A.rounds().length;
-  A.unlockRound(x.r);
+  var g = play([40, 10, 30, 20]);
+  A.lockGame(g, ['t1']);
+  var before = A.games().length;
+  A.unlockGame(g);
 
   eq(A.getState().teams[1].out, null, 'reopening brings the team back in');
-  eq(x.r.status, 'active', 'the round is active again');
-  eq(x.r.elim, [], 'the elimination list is cleared');
+  eq(g.status, 'active', 'the game is active again');
+  eq(g.elim, [], 'the elimination list is cleared');
   eq(A.alive().length, 4, 'everyone is back');
-  eq(A.rounds().length, before, 'reopening does not delete the round that follows');
-  eq(A.roundScore(x.r, 't1').v, 10, 'the scores are untouched by the round-trip');
+  eq(A.games().length, before, 'reopening does not delete the game that follows');
+  eq(A.gameScore(g, 't1').v, 10, 'the scores are untouched by the round-trip');
 })();
 
 G('locking with a host override');
 (function(){
   fresh(4);
-  var x = playRound([40, 10, 30, 20]);
-  A.lockRound(x.r, ['t0']);      // host overrules the rule and knocks out the leader
+  var g = play([40, 10, 30, 20]);
+  A.lockGame(g, ['t0']);          // host overrules the rule and knocks out the leader
   eq(A.getState().teams[0].out, 1, 'the host’s pick is what is applied');
   eq(A.getState().teams[1].out, null, 'the rule’s pick survives when overruled');
 })();
 
-G('a full five-round event');
+G('a full event');
 (function(){
   fresh(5);
-  // t4 is best every round; the bottom team differs each time
   var out = [];
-  [[50,40,30,20,60],[50,40,30,10,60],[50,40,20,0,60],[50,30,0,0,60]].forEach(function(sc, i){
-    var r = A.rounds().filter(function(x){ return x.status !== 'done'; })[0] || A.addRound();
-    var g = A.gamesOf(r.id)[0] || A.addGame(r.id, 'G', '');
+  [[50,40,30,20,60],[50,40,30,10,60],[50,40,20,0,60],[50,30,0,0,60]].forEach(function(sc){
+    var g = A.games().filter(function(x){ return x.status !== 'done'; })[0] || A.addGame();
     A.alive().forEach(function(t){ A.setCell(g.id, t.id, sc[Number(t.id.slice(1))]); });
-    var p = A.elimPreview(r);
+    var p = A.elimPreview(g);
     out.push(p.picks[0].t.id);
-    A.lockRound(r, p.picks.map(function(z){ return z.t.id; }));
+    A.lockGame(g, p.picks.map(function(z){ return z.t.id; }));
   });
-  eq(out, ['t3','t2','t1','t0'], 'each round knocks out the current worst survivor');
+  eq(out, ['t3','t2','t1','t0'], 'each game knocks out the current worst survivor');
   eq(A.alive().length, 1, 'one team is left standing');
   eq(A.alive()[0].id, 't4', 'and it is the team that kept winning');
-  eq(A.rounds().length, 4, 'no empty round is added once a champion exists');
+  eq(A.games().length, 4, 'no empty game is added once a champion exists');
 
   var st = A.standings();
   eq(st[0].t.id, 't4', 'the champion tops the standings');
@@ -301,74 +279,120 @@ G('a full five-round event');
 G('standings');
 (function(){
   fresh(3);
-  var x = playRound([10, 30, 20]);
-  var st = A.standings();
-  eq(st.map(function(s){ return s.t.id; }), ['t1','t2','t0'], 'with nobody out it is a plain score ranking');
-  eq(st[0].total, 30, 'the total travels with the row');
+  play([10, 30, 20]);
+  eq(A.standings().map(function(s){ return s.t.id; }), ['t1','t2','t0'],
+     'with nobody out it is a plain score ranking');
+  eq(A.standings()[0].total, 30, 'the total travels with the row');
 
   A.getState().rules.direction = 'low';
   eq(A.standings().map(function(s){ return s.t.id; }), ['t0','t2','t1'], 'low-wins flips the order');
 })();
 
 /* --------------------------------------------------------------- deleting */
-G('deleting things');
+G('deleting a game renumbers the rest');
+(function(){
+  fresh(5);
+  var g1 = play([50,40,30,20,10]); A.lockGame(g1, ['t4']);   // t4 out on game 1
+  var g2 = A.games()[1];
+  A.alive().forEach(function(t){ A.setCell(g2.id, t.id, 10); });
+  A.setCell(g2.id, 't3', 1);       A.lockGame(g2, ['t3']);   // t3 out on game 2
+  var g3 = A.games()[2];
+  A.alive().forEach(function(t){ A.setCell(g3.id, t.id, 10); });
+  A.setCell(g3.id, 't2', 1);       A.lockGame(g3, ['t2']);   // t2 out on game 3
+  eq(A.games().map(function(x){ return x.idx; }), [1,2,3,4], 'setup: four games');
+
+  A.delGame(g2.id);
+  eq(A.games().length, 3, 'the game is gone');
+  eq(A.games().map(function(x){ return x.idx; }), [1,2,3], 'the games after it renumber');
+  eq(A.getState().teams[4].out, 1, 'a team knocked out before it keeps its number');
+  eq(A.getState().teams[3].out, null, 'the team it knocked out comes back in');
+  eq(A.getState().teams[2].out, 2, 'a team knocked out after it shifts down with the numbering');
+  eq(Object.keys(A.getState().scores).filter(function(k){ return k.split('|')[0] === g2.id; }).length, 0,
+     'and every score in it is gone');
+  eq(A.gameScore(A.games()[0], 't0').v, 50, 'the surviving games keep their scores');
+})();
+
+G('deleting a team');
 (function(){
   fresh(3);
-  var x = playRound([10, 30, 20]);
-  A.lockRound(x.r, ['t0']);
-  eq(A.rounds()[0].elim, ['t0'], 'setup: t0 was knocked out');
+  var g = play([10, 30, 20]);
+  A.lockGame(g, ['t0']);
+  eq(A.games()[0].elim, ['t0'], 'setup: t0 was knocked out');
 
   A.delTeam('t0');
   eq(A.getState().teams.length, 2, 'the team is gone');
-  eq(A.rounds()[0].elim, [], 'and is scrubbed from the round that eliminated it');
+  eq(A.games()[0].elim, [], 'and is scrubbed from the game that eliminated it');
   eq(Object.keys(A.getState().scores).filter(function(k){ return k.split('|')[1] === 't0'; }).length, 0,
      'every score of a deleted team goes with it');
-
-  var r2 = A.rounds()[1];
-  var g = A.addGame(r2.id, 'Extra', '');
-  A.setCell(g.id, 't1', 5);
-  A.delGame(g.id);
-  eq(A.gamesOf(r2.id).length, 0, 'the game is gone');
-  eq(Object.keys(A.getState().scores).filter(function(k){ return k.split('|')[0] === g.id; }).length, 0,
-     'and its scores with it');
-
-  var keep = A.rounds()[0].id;
-  A.delRound(r2.id);
-  eq(A.rounds().length, 1, 'the round is gone');
-  eq(A.rounds()[0].id, keep, 'and the other round is untouched');
 })();
 
-/* ------------------------------------------------------ storage + mapping */
+/* ----------------------------------------------------------------- saving */
 G('migrate');
 (function(){
   var d = A.migrate(null);
   eq(d.teams, [], 'garbage input falls back to defaults');
-  eq(d.rules.perRound, 1, 'default rules are filled in');
+  eq(d.rules.perGame, 1, 'default rules are filled in');
 
-  var m = A.migrate({ teams: [{ id: 'a', name: 'A' }], rounds: [{ id: 'r', idx: 1, name: 'R' }] });
+  var m = A.migrate({ teams: [{ id: 'a', name: 'A' }], games: [{ id: 'g', name: 'G' }] });
   eq(m.teams[0].sort, 0, 'a team with no sort order gets one');
   eq(m.teams[0].out, null, 'a team with no status is in');
-  eq(m.rounds[0].elim, [], 'a round with no elimination list gets an empty one');
+  eq(m.games[0].idx, 1, 'a game with no number gets one');
+  eq(m.games[0].elim, [], 'a game with no elimination list gets an empty one');
+  eq(m.games[0].status, 'active', 'and defaults to open');
   eq(m.scores, {}, 'a missing score map becomes an empty one');
-  eq(m.rules.basis, 'round', 'partial saved state keeps the default rules it lacks');
+  eq(m.rules.basis, 'game', 'partial saved state keeps the default rules it lacks');
+})();
+
+G('migrate — a v1 save with rounds');
+(function(){
+  var v1 = {
+    version: 1,
+    rules: { basis: 'round', perRound: 2, direction: 'low', confirm: true },
+    rounds: [{ id: 'r1', idx: 1, name: 'R1', note: 'gym', status: 'done',   elim: ['t1'], lockedAt: 55 },
+             { id: 'r2', idx: 2, name: 'R2', note: '',    status: 'active', elim: [],     lockedAt: 0  }],
+    games: [{ id: 'g1', roundId: 'r1', name: 'Quiz',  icon: 'Q', sort: 0 },
+            { id: 'g2', roundId: 'r1', name: 'Relay', icon: 'R', sort: 1 },
+            { id: 'g3', roundId: 'r2', name: 'Darts', icon: 'D', sort: 0 }],
+    teams: [{ id: 't0', name: 'A', out: null, sort: 0 },
+            { id: 't1', name: 'B', out: 1,    sort: 1 }],
+    scores: { 'g1|t0': 5, 'g2|t0': 3 }
+  };
+  var m = A.migrate(v1);
+
+  eq(m.games.map(function(g){ return g.id; }), ['g1','g2','g3'], 'the rounds flatten into games in play order');
+  eq(m.games.map(function(g){ return g.idx; }), [1,2,3], 'and are renumbered 1..n');
+  eq(m.games.map(function(g){ return g.status; }), ['done','done','active'],
+     'each game inherits the status of the round it belonged to');
+  eq(m.games[1].elim, ['t1'], 'the round’s elimination lands on the last game of that round');
+  eq(m.games[0].elim, [], 'and not on the earlier ones');
+  eq(m.teams[1].out, 2, 'a team out in round 1 is now out on game 2, where the elimination happened');
+  eq(m.teams[0].out, null, 'a surviving team stays in');
+  eq(m.games[0].note, 'gym', 'the round note carries onto its games');
+  eq(m.scores, { 'g1|t0': 5, 'g2|t0': 3 }, 'every score survives the migration');
+  eq(m.rounds, undefined, 'the rounds are gone');
+  eq(m.games[0].roundId, undefined, 'and so is the back-reference');
+  eq(m.rules.basis, 'game', 'the old round-based rule becomes the game-based one');
+  eq(m.rules.perGame, 2, 'perRound becomes perGame');
+  eq(m.rules.perRound, undefined, 'and the old key is dropped');
+  eq(m.rules.direction, 'low', 'a rule that did not change is left alone');
+  eq(m.version, 2, 'the save is stamped as version 2');
 })();
 
 G('row mapping');
 (function(){
   var t = { id: 'a', name: 'A', color: '#fff', emoji: '🐯', members: 'x,y', out: 3, sort: 2 };
-  var p = A.teamPayload(t);
-  eq(p.out, 3, 'an eliminated team sends its round number');
-  eq(A.rowToTeam({ id: 'a', name: 'A', color: '#fff', emoji: '🐯', members: 'x,y', out_round: 3, sort: 2 }), t,
+  eq(A.teamPayload(t).out, 3, 'an eliminated team sends its game number');
+  eq(A.rowToTeam({ id: 'a', name: 'A', color: '#fff', emoji: '🐯', members: 'x,y', out_game: 3, sort: 2 }), t,
      'a team survives the round trip through a database row');
-  eq(A.rowToTeam({ id: 'b', name: 'B', out_round: null, sort: 0 }).out, null,
-     'a null out_round comes back as still-in');
+  eq(A.rowToTeam({ id: 'b', name: 'B', out_game: null, sort: 0 }).out, null,
+     'a null out_game comes back as still-in');
   eq(A.teamPayload({ id: 'b', name: 'B', out: null, sort: 0 }).out, '',
      'still-in sends an empty string, which the SQL turns back into null');
 
-  var r = { id: 'r', idx: 2, name: 'R2', note: 'n', status: 'done', elim: ['a'], lockedAt: 1234 };
-  eq(A.rowToRound({ id: 'r', idx: 2, name: 'R2', note: 'n', status: 'done', elim: ['a'], locked_at: 1234 }), r,
-     'a round survives the round trip too');
-  eq(A.roundPayload(r).lockedAt, 1234, 'the lock timestamp is sent');
+  var g = { id: 'g', idx: 2, name: 'Relay', icon: 'R', note: 'n', status: 'done', elim: ['a'], lockedAt: 1234 };
+  eq(A.rowToGame({ id: 'g', idx: 2, name: 'Relay', icon: 'R', note: 'n', status: 'done',
+                   elim: ['a'], locked_at: 1234 }), g, 'a game survives the round trip too');
+  eq(A.gamePayload(g).lockedAt, 1234, 'the lock timestamp is sent');
 })();
 
 /* ----------------------------------------------------------------- render */
@@ -389,51 +413,48 @@ G('render');
     ok(h.indexOf('undefined') < 0, what + ' has no stray undefined');
     ok(h.indexOf('NaN') < 0, what + ' has no NaN');
     ok(h.indexOf('[object Object]') < 0, what + ' has no leaked object');
-    ['div','button','table','tbody','tr','td','th','span','label','input'].forEach(function(t){
-      if (t === 'input') return;                       // void element, never closed
+    ['div','button','table','tbody','tr','td','th','span','label'].forEach(function(t){
       ok(balanced(h, t), what + ' closes every <' + t + '>');
     });
   }
 
   fresh(9);                                            // a realistic 9-team event
-  var one = playRound([30,20,50,10,40,25,35,15,45], 'Opening Round');
-  A.addGame(one.r.id, 'Tug of war', '💪');
-  A.setCell(A.gamesOf(one.r.id)[1].id, 't0', 5);
-  A.lockRound(one.r, ['t3']);
-  var two = A.rounds()[1];
-  A.addGame(two.id, 'Quiz', '🧠');
-  A.setCell(A.gamesOf(two.id)[0].id, 't0', 12);
+  var g1 = play([30,20,50,10,40,25,35,15,45], 'Tug of war');
+  A.lockGame(g1, ['t3']);
+  var g2 = A.games()[1];
+  A.setCell(g2.id, 't0', 12);
 
   clean(A.vBoard(), 'the standings board');
-  clean(A.vRounds(), 'the rounds view');
+  clean(A.vGames(), 'the games view');
   clean(A.vTeams(), 'the teams view');
   clean(A.vSettings(), 'the settings view');
-  clean(A.roundCard(one.r), 'a locked round card');
-  clean(A.roundCard(two), 'an open round card');
+  clean(A.gameCard(g1), 'a locked game card');
+  clean(A.gameCard(g2), 'an open game card');
 
   var b = A.vBoard();
   ok(b.indexOf('Team 3') >= 0, 'the board lists an eliminated team');
   ok(b.indexOf('💀') >= 0, 'and marks where it was knocked out');
-  ok(A.roundCard(one.r).indexOf('Reopen') >= 0, 'a locked round offers to reopen');
-  ok(A.roundCard(two).indexOf('Lock round') >= 0, 'an open round offers to lock');
-  ok(A.roundCard(two).indexOf('Team 3') < 0, 'an eliminated team is off the next round’s grid');
+  ok(A.gameCard(g1).indexOf('Reopen') >= 0, 'a locked game offers to reopen');
+  ok(A.gameCard(g2).indexOf('Lock game') >= 0, 'an open game offers to lock');
+  ok(A.gameCard(g2).indexOf('Team 3') < 0, 'an eliminated team is off the next game’s card');
+  ok(A.gameCard(g1).indexOf('data-act="step"') < 0, 'a locked game has no steppers');
+  ok(A.gameCard(g2).indexOf('data-act="step"') >= 0, 'an open game does');
 
-  A.lockModal(two.id);
+  A.lockModal(g2.id);
   var m = A.getModal();
   clean(m, 'the lock dialog');
   ok(m.indexOf('data-elim') >= 0, 'the lock dialog offers a checkbox per team');
   eq(m.split('data-elim').length - 1, 8, 'one row per surviving team');
 
-  A.openScorer(A.gamesOf(two.id)[0].id);
+  A.openScorer(g2.id);
   var sc = A.getScorer();
-  clean(sc, 'the one-game scorer');
+  clean(sc, 'the full-screen scorer');
   ok(sc.indexOf('data-act="step"') >= 0, 'the scorer has +/- steppers');
+  ok(sc.indexOf('Lock & eliminate') >= 0, 'and can lock the game without going back');
 
-  // the champion banner only appears once the event is actually over
   ok(A.vBoard().indexOf('Last team standing') < 0, 'no champion banner mid-event');
   fresh(2);
-  var f = playRound([10, 5]);
-  A.lockRound(f.r, ['t1']);
+  A.lockGame(play([10, 5]), ['t1']);
   ok(A.vBoard().indexOf('Last team standing') >= 0, 'the champion banner appears at the end');
   clean(A.vBoard(), 'the finished board');
 })();

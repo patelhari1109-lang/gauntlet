@@ -156,41 +156,25 @@ th.c,td.c{text-align:center}
 .rk{font-variant-numeric:tabular-nums;font-weight:700;color:var(--mut2);width:26px}
 .tot{font-variant-numeric:tabular-nums;font-weight:800;font-size:16px}
 
-/* ---------- rounds ---------- */
-.rcard{border-radius:14px;border:1px solid var(--line);background:var(--panel);overflow:hidden;margin-bottom:12px}
-.rcard.act{border-color:#7f5a2d}
-.rhead{display:flex;align-items:center;gap:12px;padding:14px 16px;width:100%;text-align:left;flex-wrap:wrap}
-.rtoggle{flex:1;display:flex;align-items:center;gap:12px;text-align:left;min-width:0}
-.rtoggle:hover .nm{color:#fff}
-.rhead .ix{width:38px;height:38px;flex:none;border-radius:10px;background:var(--panel2);border:1px solid var(--line);
+/* ---------- game cards ---------- */
+.gcard{border-radius:14px;border:1px solid var(--line);background:var(--panel);overflow:hidden;margin-bottom:12px}
+.gcard.act{border-color:#7f5a2d}
+.ghead{display:flex;align-items:center;gap:12px;padding:14px 16px;flex-wrap:wrap}
+.gtoggle{flex:1;display:flex;align-items:center;gap:12px;text-align:left;min-width:0}
+.gtoggle:hover .nm{color:#fff}
+.ghead .ix{width:38px;height:38px;flex:none;border-radius:10px;background:var(--panel2);border:1px solid var(--line);
   display:grid;place-items:center;font-weight:800;font-size:15px;color:var(--mut)}
-.rcard.act .rhead .ix{border-color:#7f5a2d;background:#2a2116;color:#fbbf24}
-.rhead .mid{flex:1;min-width:0}
-.rhead .nm{font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.rhead .meta{font-size:12px;color:var(--mut2);margin-top:3px}
-.rbody{border-top:1px solid var(--line);padding:14px 16px}
-.gtab{min-width:100%;border-collapse:separate;border-spacing:0}
-.gtab th,.gtab td{border-bottom:1px solid rgba(36,49,71,.55);padding:8px 10px}
-.gtab th.tm,.gtab td.tm{position:sticky;left:0;background:var(--panel);z-index:2;min-width:150px}
-.gtab td.tm{font-weight:600}
-.gtab .gh{text-align:center;min-width:96px}
-.gtab .gh button{font-size:11px;font-weight:700;color:var(--mut2);text-transform:uppercase;letter-spacing:.08em;
-  padding:4px 8px;border-radius:7px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gtab .gh button:hover{color:var(--tx);background:var(--panel2)}
-.gtab input.sc{width:76px;text-align:center;padding:7px 6px;font-weight:700;font-variant-numeric:tabular-nums;
-  border-radius:9px;background:var(--bg)}
-.gtab input.sc::-webkit-outer-spin-button,.gtab input.sc::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.gtab input.sc{-moz-appearance:textfield}
-.gtab tr.zone td{background:rgba(251,113,133,.07)}
-.gtab tr.zone td.tm{background:#1b141b}
-.gtab td.rt{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:15px}
+.gcard.act .ghead .ix{border-color:#7f5a2d;background:#2a2116;color:#fbbf24}
+.ghead .mid{flex:1;min-width:0}
+.ghead .nm{font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ghead .meta{font-size:12px;color:var(--mut2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gbody{border-top:1px solid var(--line);padding:14px 16px}
 .zoneflag{font-size:10.5px;font-weight:700;color:#ff8fa3;letter-spacing:.06em;text-transform:uppercase}
-.gwrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
 .outlist{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .outpill{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:99px;
   border:1px solid #7f2d3c;background:#2a1620;color:#ff8fa3;font-size:12.5px;font-weight:600}
 
-/* ---------- game scorer overlay ---------- */
+/* ---------- full-screen scorer ---------- */
 .ov{position:fixed;inset:0;z-index:100;background:#080b12;display:flex;flex-direction:column;animation:fade .18s ease}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .ov.hide{display:none}
@@ -201,6 +185,8 @@ th.c,td.c{text-align:center}
 .srow{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:13px;background:var(--panel);
   border:1px solid var(--line);margin-bottom:9px}
 .srow.zone{border-color:#7f2d3c}
+.srow.dead{opacity:.5}
+.srow .pos{width:20px;flex:none;text-align:right;font-weight:700;color:var(--mut2);font-size:13px}
 .srow .nm{flex:1;min-width:0;font-weight:600;display:flex;align-items:center;gap:9px}
 .srow .nm i{width:9px;height:9px;border-radius:50%;font-style:normal;flex:none}
 .srow .stp{width:42px;height:42px;flex:none;border-radius:11px;border:1px solid var(--line2);
@@ -297,7 +283,7 @@ body.present{font-size:17px}
     <div class="brand"><span class="dot"></span><div>Gauntlet<small>Elimination</small></div></div>
     <nav>
       <button data-view="board" class="on">Standings</button>
-      <button data-view="rounds">Rounds</button>
+      <button data-view="games">Games</button>
       <button data-view="teams">Teams</button>
       <button data-view="settings">Settings</button>
     </nav>
@@ -325,22 +311,21 @@ const PALETTE = ['#f59e0b','#22d3ee','#a78bfa','#34d399','#fb7185','#60a5fa',
                  '#f472b6','#facc15','#4ade80','#c084fc','#38bdf8','#fb923c'];
 
 const DEFAULTS = {
-  version: 1,
+  version: 2,
   event: { name: 'Fun Games', tagline: 'Last team standing' },
-  /* basis     — what decides who goes out: this round's score, or the running total
-     perRound  — how many teams are knocked out at the end of each round
+  /* basis     — what decides who goes out: this game's score, or the running total
+     perGame   — how many teams are knocked out at the end of each game
      direction — 'high' = high score is good, 'low' = low score is good (times, penalties)
      confirm   — show the elimination preview before it is applied                */
-  rules: { basis: 'round', perRound: 1, direction: 'high', confirm: true },
-  teams:  [],   // { id, name, color, emoji, members, out, sort }   out = round idx it went out in
-  rounds: [],   // { id, idx, name, note, status, elim[], lockedAt }
-  games:  [],   // { id, roundId, name, icon, sort }
-  scores: {}    // 'gameId|teamId' -> number
+  rules: { basis: 'game', perGame: 1, direction: 'high', confirm: true },
+  teams: [],   // { id, name, color, emoji, members, out, sort }  out = the game idx it went out on
+  games: [],   // { id, idx, name, icon, note, status, elim[], lockedAt }
+  scores: {}   // 'gameId|teamId' -> number
 };
 
 let state = load();
 let view = 'board';
-let openRounds = {};        // which round cards are expanded
+let openGames = {};         // which game cards are expanded
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
@@ -351,18 +336,61 @@ function load(){
   } catch (e) { console.warn('load failed', e); }
   return clone(DEFAULTS);
 }
+
+/* Version 1 nested games inside rounds and eliminated a team per round. Games
+   are the only layer now, so an old save is flattened in play order and each
+   round's eliminations land on the last game of that round — which is exactly
+   when they happened.                                                         */
+function flattenRounds(s){
+  const rs = (s.rounds || []).slice().sort((a, b) => a.idx - b.idx);
+  const flat = [], lastOf = {};
+  rs.forEach(r => {
+    (s.games || []).filter(g => g.roundId === r.id)
+      .sort((a, b) => (a.sort || 0) - (b.sort || 0))
+      .forEach(g => {
+        flat.push({ id: g.id, idx: flat.length + 1, name: g.name, icon: g.icon || '',
+                    note: r.note || '', status: r.status, elim: [], lockedAt: r.lockedAt || 0 });
+        lastOf[r.id] = flat[flat.length - 1];
+      });
+    // a round with no games at all still has to keep its place
+    if (!lastOf[r.id]) {
+      flat.push({ id: r.id, idx: flat.length + 1, name: r.name, icon: '', note: r.note || '',
+                  status: r.status, elim: [], lockedAt: r.lockedAt || 0 });
+      lastOf[r.id] = flat[flat.length - 1];
+    }
+    if (r.elim && r.elim.length) lastOf[r.id].elim = r.elim.slice();
+  });
+  const idxOfRound = {};
+  rs.forEach(r => { idxOfRound[r.idx] = lastOf[r.id] ? lastOf[r.id].idx : null; });
+  (s.teams || []).forEach(t => { if (t.out != null) t.out = idxOfRound[t.out] || t.out; });
+  s.games = flat;
+  delete s.rounds;
+  return s;
+}
+
 function migrate(s){
   const d = clone(DEFAULTS);
   if (!s || typeof s !== 'object') return d;
-  s.version = 1;
+  if (Array.isArray(s.rounds) && s.rounds.length) s = flattenRounds(s);
+  s.version = 2;
   s.event   = Object.assign({}, d.event, s.event || {});
-  s.rules   = Object.assign({}, d.rules, s.rules || {});
-  s.teams   = Array.isArray(s.teams)  ? s.teams  : [];
-  s.rounds  = Array.isArray(s.rounds) ? s.rounds : [];
-  s.games   = Array.isArray(s.games)  ? s.games  : [];
+  /* Read the old rules before the defaults are merged in, or `perGame` is
+     already filled with its default and the saved `perRound` looks redundant. */
+  const savedRules = s.rules || {};
+  s.rules = Object.assign({}, d.rules, savedRules);
+  if (s.rules.basis === 'round') s.rules.basis = 'game';
+  if (savedRules.perGame == null && savedRules.perRound != null) s.rules.perGame = savedRules.perRound;
+  delete s.rules.perRound;
+  s.teams   = Array.isArray(s.teams) ? s.teams : [];
+  s.games   = Array.isArray(s.games) ? s.games : [];
   s.scores  = (s.scores && typeof s.scores === 'object') ? s.scores : {};
   s.teams.forEach((t, i) => { if (t.sort == null) t.sort = i; if (t.out === undefined) t.out = null; });
-  s.rounds.forEach(r => { if (!Array.isArray(r.elim)) r.elim = []; });
+  s.games.forEach((g, i) => {
+    if (g.idx == null) g.idx = i + 1;
+    if (!Array.isArray(g.elim)) g.elim = [];
+    if (!g.status) g.status = 'active';
+    delete g.roundId; delete g.sort;
+  });
   return s;
 }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){ toast('Storage full — export a backup'); } }
@@ -398,17 +426,14 @@ const rpc = (fn, args) => api('rpc/' + fn, { method: 'POST', body: JSON.stringif
 
 /* ---- row <-> app object mapping ---- */
 const rowToTeam = r => ({ id: r.id, name: r.name, color: r.color || PALETTE[0], emoji: r.emoji || '',
-  members: r.members || '', out: r.out_round == null ? null : r.out_round, sort: r.sort || 0 });
+  members: r.members || '', out: r.out_game == null ? null : r.out_game, sort: r.sort || 0 });
 const teamPayload = t => ({ id: t.id, name: t.name, color: t.color || '', emoji: t.emoji || '',
   members: t.members || '', out: t.out == null ? '' : t.out, sort: t.sort || 0 });
 
-const rowToRound = r => ({ id: r.id, idx: r.idx, name: r.name, note: r.note || '',
+const rowToGame = r => ({ id: r.id, idx: r.idx, name: r.name, icon: r.icon || '', note: r.note || '',
   status: r.status, elim: Array.isArray(r.elim) ? r.elim : [], lockedAt: r.locked_at || 0 });
-const roundPayload = r => ({ id: r.id, idx: r.idx, name: r.name, note: r.note || '',
-  status: r.status, elim: r.elim || [], lockedAt: r.lockedAt || '' });
-
-const rowToGame = r => ({ id: r.id, roundId: r.round_id, name: r.name, icon: r.icon || '', sort: r.sort || 0 });
-const gamePayload = g => ({ id: g.id, roundId: g.roundId, name: g.name, icon: g.icon || '', sort: g.sort || 0 });
+const gamePayload = g => ({ id: g.id, idx: g.idx, name: g.name, icon: g.icon || '', note: g.note || '',
+  status: g.status, elim: g.elim || [], lockedAt: g.lockedAt || '' });
 
 /* ---- outbox: survives a refresh, coalesces rapid taps on one cell ---- */
 function enqueue(fn, args, key){
@@ -417,15 +442,13 @@ function enqueue(fn, args, key){
   outbox.push({ fn: fn, args: args, k: key || null });
   saveOutbox(); netPaint(); flush();
 }
-const syncTeam     = t  => enqueue('gauntlet_upsert_team',  { p_pin: cloud.pin, p: teamPayload(t) }, 't:' + t.id);
-const syncDelTeam  = id => enqueue('gauntlet_delete_team',  { p_pin: cloud.pin, p_id: id }, 'dt:' + id);
-const syncRound    = r  => enqueue('gauntlet_upsert_round', { p_pin: cloud.pin, p: roundPayload(r) }, 'r:' + r.id);
-const syncDelRound = id => enqueue('gauntlet_delete_round', { p_pin: cloud.pin, p_id: id }, 'dr:' + id);
-const syncGame     = g  => enqueue('gauntlet_upsert_game',  { p_pin: cloud.pin, p: gamePayload(g) }, 'g:' + g.id);
-const syncDelGame  = id => enqueue('gauntlet_delete_game',  { p_pin: cloud.pin, p_id: id }, 'dg:' + id);
-const syncScore    = (gid, tid, v) => enqueue('gauntlet_set_score',
+const syncTeam    = t  => enqueue('gauntlet_upsert_team', { p_pin: cloud.pin, p: teamPayload(t) }, 't:' + t.id);
+const syncDelTeam = id => enqueue('gauntlet_delete_team', { p_pin: cloud.pin, p_id: id }, 'dt:' + id);
+const syncGame    = g  => enqueue('gauntlet_upsert_game', { p_pin: cloud.pin, p: gamePayload(g) }, 'g:' + g.id);
+const syncDelGame = id => enqueue('gauntlet_delete_game', { p_pin: cloud.pin, p_id: id }, 'dg:' + id);
+const syncScore   = (gid, tid, v) => enqueue('gauntlet_set_score',
   { p_pin: cloud.pin, p_game: gid, p_team: tid, p_value: v }, 's:' + gid + '|' + tid);
-const syncConfig   = () => enqueue('gauntlet_save_config',  { p_pin: cloud.pin,
+const syncConfig  = () => enqueue('gauntlet_save_config', { p_pin: cloud.pin,
   p: { event: state.event, rules: state.rules } }, 'cfg');
 
 async function flush(){
@@ -459,10 +482,9 @@ async function pull(){
   if (!online() || pulling) return;
   pulling = true;
   try {
-    const [cfg, teams, rounds, games, scores] = await Promise.all([
+    const [cfg, teams, games, scores] = await Promise.all([
       api('gauntlet_config?select=*&id=eq.1').then(r => r.json()),
       api('gauntlet_teams?select=*').then(r => r.json()),
-      api('gauntlet_rounds?select=*').then(r => r.json()),
       api('gauntlet_games?select=*').then(r => r.json()),
       api('gauntlet_scores?select=*').then(r => r.json())
     ]);
@@ -472,17 +494,11 @@ async function pull(){
     }
     /* Anything still queued locally is newer than what the server can tell me,
        so it must survive the merge. */
-    const held = new Set(outbox.filter(j => /upsert_team$/.test(j.fn)).map(j => j.args.p.id));
+    const heldT = new Set(outbox.filter(j => /upsert_team$/.test(j.fn)).map(j => j.args.p.id));
     if (Array.isArray(teams)) {
-      const mine = {}; state.teams.forEach(t => { if (held.has(t.id)) mine[t.id] = t; });
+      const mine = {}; state.teams.forEach(t => { if (heldT.has(t.id)) mine[t.id] = t; });
       state.teams = teams.map(r => mine[r.id] || rowToTeam(r));
       Object.keys(mine).forEach(id => { if (!state.teams.some(t => t.id === id)) state.teams.push(mine[id]); });
-    }
-    const heldR = new Set(outbox.filter(j => /upsert_round$/.test(j.fn)).map(j => j.args.p.id));
-    if (Array.isArray(rounds)) {
-      const mine = {}; state.rounds.forEach(r => { if (heldR.has(r.id)) mine[r.id] = r; });
-      state.rounds = rounds.map(r => mine[r.id] || rowToRound(r));
-      Object.keys(mine).forEach(id => { if (!state.rounds.some(r => r.id === id)) state.rounds.push(mine[id]); });
     }
     const heldG = new Set(outbox.filter(j => /upsert_game$/.test(j.fn)).map(j => j.args.p.id));
     if (Array.isArray(games)) {
@@ -598,7 +614,6 @@ async function uploadLocal(){
   toast('Uploading…');
   syncConfig();
   state.teams.forEach(syncTeam);
-  state.rounds.forEach(syncRound);
   state.games.forEach(syncGame);
   Object.keys(state.scores).forEach(k => {
     const p = k.split('|'); syncScore(p[0], p[1], state.scores[k]);
@@ -640,28 +655,24 @@ async function connTest(){
 
 /* ============================ lookups ============================ */
 const teamById  = id => state.teams.find(t => t.id === id);
-const roundById = id => state.rounds.find(r => r.id === id);
 const gameById  = id => state.games.find(g => g.id === id);
 const teamName  = id => (teamById(id) || {}).name || '—';
-const teamColor = id => (teamById(id) || {}).color || '#64748b';
 
-const bySort  = (a, b) => (a.sort || 0) - (b.sort || 0);
-const rounds  = () => state.rounds.slice().sort((a, b) => a.idx - b.idx);
-const gamesOf = rid => state.games.filter(g => g.roundId === rid).sort(bySort);
-const teams   = () => state.teams.slice().sort(bySort);
-const alive   = () => state.teams.filter(t => t.out == null).sort(bySort);
+const bySort = (a, b) => (a.sort || 0) - (b.sort || 0);
+const games  = () => state.games.slice().sort((a, b) => a.idx - b.idx);
+const teams  = () => state.teams.slice().sort(bySort);
+const alive  = () => state.teams.filter(t => t.out == null).sort(bySort);
 
-const activeRound = () => rounds().find(r => r.status !== 'done') || null;
-const doneRounds  = () => rounds().filter(r => r.status === 'done');
-const lastDone    = () => doneRounds().slice(-1)[0] || null;
+const activeGame = () => games().find(g => g.status !== 'done') || null;
+const doneGames  = () => games().filter(g => g.status === 'done');
 
-/* A team is "in" a round if it had not yet been eliminated when that round was
-   played — which is what makes an old round's grid still show the right rows. */
-const inRound = (t, r) => t.out == null || t.out >= r.idx;
+/* A team is "in" a game if it had not yet been eliminated when that game was
+   played — which is what makes an old game's card still show the right rows. */
+const inGame = (t, g) => t.out == null || t.out >= g.idx;
 
 /* ============================ scoring ============================ */
 /* Every number on this board is derived from the score cells. Nothing is
-   stored twice, so correcting a typo three rounds later instantly re-ranks
+   stored twice, so correcting a typo three games later instantly re-ranks
    the whole event.                                                           */
 const cellKey = (gid, tid) => gid + '|' + tid;
 function cell(gid, tid){
@@ -674,127 +685,119 @@ function setCell(gid, tid, v){
   else { state.scores[k] = Number(v); syncScore(gid, tid, Number(v)); }
   save();
 }
-
-/* A team's score for one round is the sum of its game cells. `filled` is how
-   many of that round's games it actually has a number in — the difference is
-   what the "3 of 4 scored" hint on the lock button counts.                    */
-function roundScore(r, tid){
-  const gs = gamesOf(r.id);
-  let sum = 0, filled = 0;
-  gs.forEach(g => { const v = cell(g.id, tid); if (v != null) { sum += v; filled++; } });
-  return { v: sum, filled: filled, of: gs.length, any: filled > 0 };
+/* A blank cell is not the same as a zero — "hasn't played yet" vs "scored
+   nothing" — so the score of a game always travels with whether it is set. */
+function gameScore(g, tid){
+  const v = cell(g.id, tid);
+  return { v: v == null ? 0 : v, any: v != null };
 }
 function totalScore(tid, uptoIdx){
-  return rounds().reduce((s, r) =>
-    (uptoIdx == null || r.idx <= uptoIdx) ? s + roundScore(r, tid).v : s, 0);
+  return games().reduce((s, g) =>
+    (uptoIdx == null || g.idx <= uptoIdx) ? s + gameScore(g, tid).v : s, 0);
 }
 
 /* Sorting a pool from best to worst under the current direction rule. */
 const better = (a, b) => state.rules.direction === 'low' ? a - b : b - a;
-const worst  = (a, b) => -better(a, b);
 
 /* ---- standings ----
    Alive teams rank above eliminated ones. Among the eliminated, surviving
-   longer beats a big score in an early round — that is what an elimination
+   longer beats a big score in an early game — that is what an elimination
    event actually rewards. Score breaks ties inside each group.               */
 function standings(){
-  return teams().map(t => ({
-    t: t, total: totalScore(t.id), out: t.out,
-    lastR: t.out == null ? 99999 : t.out
-  })).sort((a, b) => {
-    if ((a.out == null) !== (b.out == null)) return a.out == null ? -1 : 1;
-    if (a.out != null && a.out !== b.out) return b.out - a.out;
-    return better(a.total, b.total);
-  }).map((row, i) => (row.rank = i + 1, row));
+  return teams().map(t => ({ t: t, total: totalScore(t.id), out: t.out }))
+    .sort((a, b) => {
+      if ((a.out == null) !== (b.out == null)) return a.out == null ? -1 : 1;
+      if (a.out != null && a.out !== b.out) return b.out - a.out;
+      return better(a.total, b.total);
+    }).map((row, i) => (row.rank = i + 1, row));
 }
 
-/* Live order inside one round — used for the "elimination zone" highlight on
-   the active round's grid and for the preview in the lock dialog. */
-function roundOrder(r){
-  const pool = state.teams.filter(t => inRound(t, r)).sort(bySort);
-  const val  = t => state.rules.basis === 'total' ? totalScore(t.id, r.idx) : roundScore(r, t.id).v;
-  return pool.map(t => ({ t: t, v: val(t), rs: roundScore(r, t.id) }))
+/* Live order within one game — used for the position number on each row, the
+   elimination-zone highlight, and the preview in the lock dialog. */
+function gameOrder(g){
+  const pool = state.teams.filter(t => inGame(t, g)).sort(bySort);
+  const val  = t => state.rules.basis === 'total' ? totalScore(t.id, g.idx) : gameScore(g, t.id).v;
+  return pool.map(t => ({ t: t, v: val(t), has: gameScore(g, t.id).any }))
              .sort((a, b) => better(a.v, b.v) || bySort(a.t, b.t));
 }
 
-/* Who the rules say goes out at the end of this round.
+/* Who the rules say goes out at the end of this game.
    Never empties the board: with N teams left it can only take N-1.
    `tie` is true when the cut line falls between two equal scores, which is the
    one case a host must resolve themselves — a tie-break game, or a coin.      */
-function elimPreview(r){
-  const order = roundOrder(r);                     // best first
+function elimPreview(g){
+  const order = gameOrder(g);                      // best first
   const rev   = order.slice().reverse();           // worst first
-  const n     = Math.max(0, Math.min(state.rules.perRound || 1, order.length - 1));
+  const n     = Math.max(0, Math.min(state.rules.perGame || 1, order.length - 1));
   const picks = rev.slice(0, n);
   const tie   = n > 0 && rev.length > n && rev[n].v === rev[n - 1].v;
-  const unscored = order.filter(o => !o.rs.any).length;
-  return { order: order, worstFirst: rev, picks: picks, n: n, tie: tie, unscored: unscored };
+  return { order: order, worstFirst: rev, picks: picks, n: n, tie: tie,
+           unscored: order.filter(o => !o.has).length };
 }
 
 /* ============================ mutations ============================ */
-function addRound(name){
-  const idx = (rounds().slice(-1)[0] || { idx: 0 }).idx + 1;
-  const r = { id: uid(), idx: idx, name: name || ('Round ' + idx), note: '',
-              status: 'active', elim: [], lockedAt: 0 };
-  state.rounds.push(r); save(); syncRound(r);
-  openRounds[r.id] = true;
-  return r;
-}
-function addGame(roundId, name, icon){
-  const g = { id: uid(), roundId: roundId, name: name || 'Game',
-              icon: icon || '', sort: gamesOf(roundId).length };
+function addGame(name, icon){
+  const idx = (games().slice(-1)[0] || { idx: 0 }).idx + 1;
+  const g = { id: uid(), idx: idx, name: name || ('Game ' + idx), icon: icon || '',
+              note: '', status: 'active', elim: [], lockedAt: 0 };
   state.games.push(g); save(); syncGame(g);
+  openGames[g.id] = true;
   return g;
-}
-function delGame(id){
-  clearGameScores(id);
-  state.games = state.games.filter(g => g.id !== id);
-  save(); syncDelGame(id);
 }
 function clearGameScores(gid){
   Object.keys(state.scores).forEach(k => { if (k.split('|')[0] === gid) delete state.scores[k]; });
 }
-function delRound(id){
-  gamesOf(id).forEach(g => clearGameScores(g.id));
-  state.games  = state.games.filter(g => g.roundId !== id);
-  state.rounds = state.rounds.filter(r => r.id !== id);
-  save(); syncDelRound(id);
+/* Deleting a game leaves a hole in the numbering, so everything after it
+   shifts down — including the round number recorded against every team that
+   was knocked out later, or the survival grid would point at the wrong game. */
+function delGame(id){
+  const g = gameById(id); if (!g) return;
+  const gone = g.idx;
+  clearGameScores(id);
+  state.games = state.games.filter(x => x.id !== id);
+  state.games.forEach(x => { if (x.idx > gone) { x.idx--; syncGame(x); } });
+  state.teams.forEach(t => {
+    if (t.out == null) return;
+    if (t.out === gone) { t.out = null; syncTeam(t); }        // its elimination goes with it
+    else if (t.out > gone) { t.out--; syncTeam(t); }
+  });
+  save(); syncDelGame(id);
 }
 function delTeam(id){
   Object.keys(state.scores).forEach(k => { if (k.split('|')[1] === id) delete state.scores[k]; });
   state.teams = state.teams.filter(t => t.id !== id);
-  state.rounds.forEach(r => {
-    if ((r.elim || []).indexOf(id) >= 0) { r.elim = r.elim.filter(x => x !== id); syncRound(r); }
+  state.games.forEach(g => {
+    if ((g.elim || []).indexOf(id) >= 0) { g.elim = g.elim.filter(x => x !== id); syncGame(g); }
   });
   save(); syncDelTeam(id);
 }
 
-/* Locking a round is the only thing here that is genuinely hard to undo by
+/* Locking a game is the only thing here that is genuinely hard to undo by
    hand, so it is the one thing that always asks first. */
-function lockRound(r, ids){
-  ids.forEach(id => { const t = teamById(id); if (t) { t.out = r.idx; syncTeam(t); } });
-  r.status = 'done'; r.elim = ids.slice(); r.lockedAt = Date.now();
-  syncRound(r); save();
+function lockGame(g, ids){
+  ids.forEach(id => { const t = teamById(id); if (t) { t.out = g.idx; syncTeam(t); } });
+  g.status = 'done'; g.elim = ids.slice(); g.lockedAt = Date.now();
+  syncGame(g); save();
 
   const left = alive();
-  if (left.length > 1 && !rounds().some(x => x.status !== 'done')) addRound();
+  if (left.length > 1 && !games().some(x => x.status !== 'done')) addGame();
   render();
   if (left.length === 1) { confetti(); toast(left[0].name + ' wins the gauntlet!'); }
   else if (ids.length) toast(ids.map(teamName).join(' & ') + ' eliminated');
-  else toast('Round locked — nobody went out');
+  else toast('Game locked — nobody went out');
 }
-function unlockRound(r){
-  (r.elim || []).forEach(id => { const t = teamById(id); if (t && t.out === r.idx) { t.out = null; syncTeam(t); } });
-  r.status = 'active'; r.elim = []; r.lockedAt = 0;
-  syncRound(r); save(); openRounds[r.id] = true; render();
-  toast('Round ' + r.idx + ' reopened');
+function unlockGame(g){
+  (g.elim || []).forEach(id => { const t = teamById(id); if (t && t.out === g.idx) { t.out = null; syncTeam(t); } });
+  g.status = 'active'; g.elim = []; g.lockedAt = 0;
+  syncGame(g); save(); openGames[g.id] = true; render();
+  toast(g.name + ' reopened');
 }
 
 /* ============================ render ============================ */
 function render(){
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   $('#view').innerHTML =
-    view === 'rounds'   ? vRounds()   :
+    view === 'games'    ? vGames()    :
     view === 'teams'    ? vTeams()    :
     view === 'settings' ? vSettings() : vBoard();
   netPaint();
@@ -802,6 +805,7 @@ function render(){
 
 const dot = t => '<i style="background:' + esc(t.color || '#64748b') + '"></i>';
 const nfmt = n => (Math.round(n * 100) / 100).toString();
+const label = g => (g.icon ? esc(g.icon) + ' ' : '') + esc(g.name);
 
 /* ---------- standings ---------- */
 function vBoard(){
@@ -811,7 +815,7 @@ function vBoard(){
       '<div style="margin-top:12px"><button class="btn pri" data-act="go" data-view="teams">Add the teams</button></div></div>';
   }
 
-  const rs = rounds(), done = doneRounds(), act = activeRound();
+  const gs = games(), done = doneGames(), act = activeGame();
   const st = standings(), left = alive();
   const champ = left.length === 1 && done.length ? left[0] : null;
   let h = '';
@@ -820,27 +824,26 @@ function vBoard(){
     h += '<div class="champ" style="--c:' + esc(champ.color) + '">' +
       '<div class="lbl">Last team standing</div>' +
       '<div class="nm">' + (champ.emoji ? esc(champ.emoji) + ' ' : '') + esc(champ.name) + '</div>' +
-      '<div class="sub">Survived all ' + done.length + ' round' + (done.length === 1 ? '' : 's') +
+      '<div class="sub">Survived all ' + done.length + ' game' + (done.length === 1 ? '' : 's') +
         ' · ' + nfmt(totalScore(champ.id)) + ' points</div></div>';
   }
 
   h += '<div class="stats">' +
     '<div class="stat"><b class="num">' + left.length + '</b><span>Still in</span></div>' +
     '<div class="stat"><b class="num">' + (state.teams.length - left.length) + '</b><span>Eliminated</span></div>' +
-    '<div class="stat"><b class="num">' + done.length + '<span style="font-size:14px;color:var(--mut2)"> / ' + rs.length + '</span></b><span>Rounds done</span></div>' +
-    '<div class="stat"><b class="num">' + state.games.length + '</b><span>Games</span></div>' +
+    '<div class="stat"><b class="num">' + done.length + '<span style="font-size:14px;color:var(--mut2)"> / ' + gs.length + '</span></b><span>Games played</span></div>' +
+    '<div class="stat"><b class="num">' + (champ ? '—' : (act ? act.idx : '—')) + '</b><span>Now playing</span></div>' +
     '</div>';
 
-  /* Who is currently in the drop zone, live, while the round is still running. */
+  /* Who is currently in the drop zone, live, while the game is still running. */
   if (act && !champ) {
     const p = elimPreview(act);
-    const scored = p.order.filter(o => o.rs.any).length;
+    const scored = p.order.filter(o => o.has).length;
     h += '<div class="card pad" style="margin-bottom:14px">' +
-      '<div class="row"><span class="chip live">Round ' + act.idx + ' in progress</span>' +
-      '<span class="muted" style="font-size:13px">' + esc(act.name) + ' · ' +
-        gamesOf(act.id).length + ' game' + (gamesOf(act.id).length === 1 ? '' : 's') + ' · ' +
+      '<div class="row"><span class="chip live">Game ' + act.idx + ' in progress</span>' +
+      '<span class="muted" style="font-size:13px">' + label(act) + ' · ' +
         scored + ' of ' + p.order.length + ' teams scored</span>' +
-      '<span class="sec-head sp" style="margin:0 0 0 auto"><button class="btn sm noprsnt" data-act="go" data-view="rounds">Enter scores</button></span></div>' +
+      '<span class="sec-head sp" style="margin:0 0 0 auto"><button class="btn sm noprsnt" data-act="go" data-view="games">Enter scores</button></span></div>' +
       (p.picks.length && scored
         ? '<div class="row" style="margin-top:11px"><span class="zoneflag">On the chopping block</span>' +
           p.picks.map(x => '<span class="outpill">' + (x.t.emoji ? esc(x.t.emoji) + ' ' : '') +
@@ -854,7 +857,7 @@ function vBoard(){
   const top = st.slice(0, 3);
   const max = Math.max(1, ...st.map(s => Math.abs(s.total)));
   h += '<div class="podium">' + top.map((s, i) => {
-    const t = s.t, rounds3 = rs.slice(-3);
+    const t = s.t, recent = gs.slice(-3);
     return '<div class="pcard' + (i === 0 ? ' first' : '') + (t.out != null ? ' gone' : '') +
         '" style="--c:' + esc(t.color) + '">' +
       '<div class="rk">' + (i + 1) + '</div>' +
@@ -862,30 +865,30 @@ function vBoard(){
       '<div class="tot num">' + nfmt(s.total) + '<small>pts</small></div>' +
       '<div class="bar"><i style="width:' + Math.max(3, Math.abs(s.total) / max * 100) + '%"></i></div>' +
       (t.out != null
-        ? '<span class="chip out">Out in round ' + t.out + '</span>'
-        : '<div class="split">' + rounds3.map(r => {
-            const v = roundScore(r, t.id);
-            return '<div class="g"><b class="num">' + (v.any ? nfmt(v.v) : '–') + '</b><span>R' + r.idx + '</span></div>';
+        ? '<span class="chip out">Out on game ' + t.out + '</span>'
+        : '<div class="split">' + recent.map(g => {
+            const v = gameScore(g, t.id);
+            return '<div class="g"><b class="num">' + (v.any ? nfmt(v.v) : '–') + '</b><span>G' + g.idx + '</span></div>';
           }).join('') + '</div>') +
       '</div>';
   }).join('') + '</div>';
 
   /* survival grid */
-  h += '<div class="sec-head"><h2>Every round</h2>' +
-       '<span class="sub">' + (state.rules.basis === 'total' ? 'running total' : 'round score') +
+  h += '<div class="sec-head"><h2>Every game</h2>' +
+       '<span class="sub">' + (state.rules.basis === 'total' ? 'running total' : 'game score') +
        ' decides · ' + (state.rules.direction === 'low' ? 'low score wins' : 'high score wins') + '</span></div>';
   h += '<div class="card scroll"><table class="sgrid"><thead><tr>' +
     '<th style="width:26px"></th><th>Team</th>' +
-    rs.map(r => '<th class="c" title="' + esc(r.name) + '">R' + r.idx +
-      (r.status === 'done' ? '' : ' <span style="color:var(--warn)">•</span>') + '</th>').join('') +
+    gs.map(g => '<th class="c" title="' + esc(g.name) + '">' + (g.icon ? esc(g.icon) : 'G' + g.idx) +
+      (g.status === 'done' ? '' : ' <span style="color:var(--warn)">•</span>') + '</th>').join('') +
     '<th class="r">Total</th><th class="r">Status</th></tr></thead><tbody>';
 
-  /* best/worst per round, so a column reads at a glance */
+  /* best/worst per game, so a column reads at a glance */
   const stats = {};
-  rs.forEach(r => {
-    const vals = state.teams.filter(t => inRound(t, r)).map(t => roundScore(r, t.id))
+  gs.forEach(g => {
+    const vals = state.teams.filter(t => inGame(t, g)).map(t => gameScore(g, t.id))
                             .filter(x => x.any).map(x => x.v);
-    stats[r.id] = vals.length ? { hi: Math.max.apply(null, vals), lo: Math.min.apply(null, vals) } : null;
+    stats[g.id] = vals.length ? { hi: Math.max.apply(null, vals), lo: Math.min.apply(null, vals) } : null;
   });
 
   h += st.map(s => {
@@ -893,9 +896,9 @@ function vBoard(){
     return '<tr class="' + (t.out != null ? 'gone' : '') + '">' +
       '<td class="rk num">' + s.rank + '</td>' +
       '<td><span class="tm">' + dot(t) + (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) + '</span></td>' +
-      rs.map(r => {
-        if (!inRound(t, r)) return '<td class="c"><span class="cell dead">–</span></td>';
-        const v = roundScore(r, t.id), s2 = stats[r.id];
+      gs.map(g => {
+        if (!inGame(t, g)) return '<td class="c"><span class="cell dead">–</span></td>';
+        const v = gameScore(g, t.id), s2 = stats[g.id];
         let cls = 'cell';
         if (!v.any) cls += ' none';
         else if (s2 && s2.hi !== s2.lo) {
@@ -903,167 +906,147 @@ function vBoard(){
           const bad  = state.rules.direction === 'low' ? s2.hi : s2.lo;
           if (v.v === good) cls += ' best'; else if (v.v === bad) cls += ' worst';
         }
-        const knocked = (r.elim || []).indexOf(t.id) >= 0;
+        const knocked = (g.elim || []).indexOf(t.id) >= 0;
         return '<td class="c"><span class="' + cls + '">' + (v.any ? nfmt(v.v) : '·') + '</span>' +
                (knocked ? ' <span title="eliminated here">💀</span>' : '') + '</td>';
       }).join('') +
       '<td class="r tot num">' + nfmt(s.total) + '</td>' +
       '<td class="r">' + (t.out == null
         ? '<span class="chip done">In</span>'
-        : '<span class="chip out">R' + t.out + '</span>') + '</td></tr>';
+        : '<span class="chip out">G' + t.out + '</span>') + '</td></tr>';
   }).join('');
 
   h += '</tbody></table></div>';
   return h;
 }
 
-/* ---------- rounds ---------- */
-function vRounds(){
-  const rs = rounds();
-  let h = '<div class="sec-head"><h2>Rounds</h2><span class="sub">' +
-    (rs.length ? rs.length + ' round' + (rs.length === 1 ? '' : 's') + ' · ' + alive().length + ' teams still in'
-               : 'one game or many — a team’s round score is the sum of its games') +
-    '</span><span class="sp"><button class="btn pri" data-act="addround">+ Round</button></span></div>';
+/* ---------- games ---------- */
+function vGames(){
+  const gs = games();
+  let h = '<div class="sec-head"><h2>Games</h2><span class="sub">' +
+    (gs.length ? gs.length + ' game' + (gs.length === 1 ? '' : 's') + ' · ' + alive().length + ' teams still in'
+               : 'one game, one elimination — add them as you go or all up front') +
+    '</span><span class="sp"><button class="btn pri" data-act="addgame">+ Game</button></span></div>';
 
   if (!state.teams.length)
-    return h + '<div class="card empty"><div class="big">👥</div><div>Add teams before you can score a round.</div>' +
+    return h + '<div class="card empty"><div class="big">👥</div><div>Add teams before you can score a game.</div>' +
       '<div style="margin-top:12px"><button class="btn" data-act="go" data-view="teams">Go to teams</button></div></div>';
-  if (!rs.length)
-    return h + '<div class="card empty"><div class="big">🎯</div><div>No rounds yet.</div>' +
-      '<div style="margin-top:12px"><button class="btn pri" data-act="addround">Start round 1</button></div></div>';
+  if (!gs.length)
+    return h + '<div class="card empty"><div class="big">🎯</div><div>No games yet.</div>' +
+      '<div style="margin-top:12px"><button class="btn pri" data-act="addgame">Add the first game</button></div></div>';
 
-  return h + rs.map(roundCard).join('');
+  return h + gs.map(gameCard).join('');
 }
 
-function roundCard(r){
-  const gs   = gamesOf(r.id);
-  const act  = r.status !== 'done';
-  const pool = state.teams.filter(t => inRound(t, r)).sort(bySort);
-  const open = openRounds[r.id] !== undefined ? openRounds[r.id] : act;
-  const p    = elimPreview(r);
+function gameCard(g){
+  const act  = g.status !== 'done';
+  const open = openGames[g.id] !== undefined ? openGames[g.id] : act;
+  const p    = elimPreview(g);
   const zone = {};
-  if (act) p.picks.forEach(x => { if (x.rs.any) zone[x.t.id] = true; });
+  if (act) p.picks.forEach(x => { if (x.has) zone[x.t.id] = true; });
+  const scored = p.order.filter(o => o.has).length;
 
-  let h = '<div class="rcard' + (act ? ' act' : '') + '" data-round="' + r.id + '">' +
-    '<div class="rhead">' +
-      '<button class="rtoggle" data-act="togr" data-id="' + r.id + '">' +
-        '<span class="ix num">' + r.idx + '</span>' +
-        '<span class="mid"><span class="nm">' + esc(r.name) +
+  let h = '<div class="gcard' + (act ? ' act' : '') + '" data-game="' + g.id + '">' +
+    '<div class="ghead">' +
+      '<button class="gtoggle" data-act="togg" data-id="' + g.id + '">' +
+        '<span class="ix num">' + g.idx + '</span>' +
+        '<span class="mid"><span class="nm">' + label(g) +
           (act ? '<span class="chip live">open</span>' : '<span class="chip done">locked</span>') +
-          '</span><span class="meta">' + gs.length + ' game' + (gs.length === 1 ? '' : 's') +
-          ' · ' + pool.length + ' teams' +
-          (r.elim && r.elim.length ? ' · ' + r.elim.map(teamName).join(', ') + ' knocked out' : '') +
-          (r.note ? ' · ' + esc(r.note) : '') + '</span></span>' +
+          '</span><span class="meta">' +
+          (act ? scored + ' of ' + p.order.length + ' teams scored'
+               : (g.elim && g.elim.length ? g.elim.map(teamName).join(', ') + ' knocked out' : 'nobody went out')) +
+          (g.note ? ' · ' + esc(g.note) : '') + '</span></span>' +
       '</button>' +
-      '<button class="btn sm gho noprsnt" data-act="editround" data-id="' + r.id + '">Edit</button>' +
-      '<button class="iconbtn noprsnt" data-act="togr" data-id="' + r.id + '" title="Expand">' + (open ? '▴' : '▾') + '</button>' +
+      '<button class="btn sm gho noprsnt" data-act="editgame" data-id="' + g.id + '">Edit</button>' +
+      '<button class="iconbtn noprsnt" data-act="togg" data-id="' + g.id + '" title="Expand">' + (open ? '▴' : '▾') + '</button>' +
     '</div>';
 
   if (!open) return h + '</div>';
-  h += '<div class="rbody">';
+  h += '<div class="gbody">';
 
-  if (!gs.length) {
-    h += '<div class="empty" style="padding:22px"><div>No games in this round yet.</div>' +
-      '<div style="margin-top:10px"><button class="btn pri" data-act="addgame" data-id="' + r.id + '">+ Add a game</button></div></div>';
-  } else {
-    h += '<div class="gwrap"><table class="gtab"><thead><tr>' +
-      '<th class="tm">Team</th>' +
-      gs.map(g => '<th class="gh"><button data-act="scoregame" data-id="' + g.id + '" title="Score this game on its own screen">' +
-        (g.icon ? esc(g.icon) + ' ' : '') + esc(g.name) + '</button></th>').join('') +
-      '<th class="r">Round</th></tr></thead><tbody>';
-
-    h += pool.map(t => {
-      const rsx = roundScore(r, t.id);
-      return '<tr class="' + (zone[t.id] ? 'zone' : '') + '" data-team="' + t.id + '">' +
-        '<td class="tm"><span class="tm" style="display:flex;align-items:center;gap:8px">' + dot(t) +
-          (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) + '</span></td>' +
-        gs.map(g => {
-          const v = cell(g.id, t.id);
-          return '<td class="c"><input class="sc num" type="number" step="any" inputmode="decimal" ' +
-            'data-g="' + g.id + '" data-t="' + t.id + '" ' + (act && canEdit() ? '' : 'disabled ') +
-            'value="' + (v == null ? '' : v) + '" placeholder="–" aria-label="' +
-            esc(t.name + ' — ' + g.name) + '"></td>';
-        }).join('') +
-        '<td class="rt num" data-rt="' + t.id + '">' + (rsx.any ? nfmt(rsx.v) : '–') + '</td></tr>';
-    }).join('');
-
-    h += '</tbody></table></div>';
-
-    h += '<div class="row" style="margin-top:12px">' +
-      '<button class="btn sm gho noprsnt" data-act="addgame" data-id="' + r.id + '">+ Game</button>' +
-      gs.map(g => '<button class="btn sm gho noprsnt" data-act="editgame" data-id="' + g.id + '">' +
-        (g.icon ? esc(g.icon) + ' ' : '') + esc(g.name) + ' ⚙</button>').join('') +
-      '</div>';
-  }
+  const editable = act && canEdit();
+  h += p.order.map((o, i) => {
+    const t = o.t, v = cell(g.id, t.id), dead = (g.elim || []).indexOf(t.id) >= 0;
+    return '<div class="srow' + (zone[t.id] ? ' zone' : '') + (dead ? ' dead' : '') + '" data-team="' + t.id + '">' +
+      '<span class="pos num">' + (o.has ? i + 1 : '·') + '</span>' +
+      '<span class="nm">' + dot(t) + (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) +
+        (dead ? ' 💀' : '') + '</span>' +
+      (editable ? '<button class="stp" data-act="step" data-g="' + g.id + '" data-t="' + t.id + '" data-d="-1">−</button>' : '') +
+      '<input class="num" type="number" step="any" inputmode="decimal" data-g="' + g.id + '" data-t="' + t.id + '" ' +
+        (editable ? '' : 'disabled ') + 'value="' + (v == null ? '' : v) + '" placeholder="–" aria-label="' +
+        esc(t.name + ' — ' + g.name) + '">' +
+      (editable ? '<button class="stp" data-act="step" data-g="' + g.id + '" data-t="' + t.id + '" data-d="1">+</button>' : '') +
+    '</div>';
+  }).join('');
 
   /* lock / unlock */
   if (act) {
-    const missing = p.order.filter(o => o.rs.filled < o.rs.of).length;
     h += '<div class="row noprsnt" style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">' +
       '<span class="muted" style="font-size:13px">' +
         (p.n === 0 ? 'Nobody can be eliminated — one team left.'
-                   : p.n + ' team' + (p.n === 1 ? '' : 's') + ' go out at the end of this round') +
-        (missing ? ' · <span style="color:var(--warn)">' + missing + ' team' + (missing === 1 ? ' has' : 's have') + ' blank scores</span>' : '') +
+                   : p.n + ' team' + (p.n === 1 ? '' : 's') + ' go out at the end of this game') +
+        (p.unscored ? ' · <span style="color:var(--warn)">' + p.unscored + ' still blank</span>' : '') +
       '</span>' +
       '<span style="margin-left:auto;display:flex;gap:8px">' +
-      (gs.length ? '<button class="btn pri" data-act="lock" data-id="' + r.id + '">Lock round & eliminate</button>' : '') +
+      '<button class="btn sm gho" data-act="scoregame" data-id="' + g.id + '">Full screen</button>' +
+      '<button class="btn pri" data-act="lock" data-id="' + g.id + '">Lock game & eliminate</button>' +
       '</span></div>';
   } else {
     h += '<div class="row noprsnt" style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">' +
       '<div class="outlist" style="margin:0">' +
-        (r.elim && r.elim.length
-          ? r.elim.map(id => { const t = teamById(id); return '<span class="outpill">💀 ' +
+        (g.elim && g.elim.length
+          ? g.elim.map(id => { const t = teamById(id); return '<span class="outpill">💀 ' +
               (t && t.emoji ? esc(t.emoji) + ' ' : '') + esc(teamName(id)) + '</span>'; }).join('')
-          : '<span class="muted" style="font-size:13px">Nobody was eliminated in this round.</span>') +
+          : '<span class="muted" style="font-size:13px">Nobody was eliminated in this game.</span>') +
       '</div>' +
-      '<span style="margin-left:auto"><button class="btn sm" data-act="unlock" data-id="' + r.id + '">Reopen</button></span></div>';
+      '<span style="margin-left:auto"><button class="btn sm" data-act="unlock" data-id="' + g.id + '">Reopen</button></span></div>';
   }
 
   return h + '</div></div>';
 }
 
-/* Typing in a cell must not re-render the table — that would steal focus
-   mid-keystroke — so the derived numbers on that row are patched in place. */
-function repaintRound(rid){
-  const r = roundById(rid); if (!r) return;
-  const box = document.querySelector('[data-round="' + rid + '"]'); if (!box) return;
-  const p = elimPreview(r), zone = {};
-  if (r.status !== 'done') p.picks.forEach(x => { if (x.rs.any) zone[x.t.id] = true; });
-  box.querySelectorAll('tbody tr').forEach(tr => {
-    const tid = tr.dataset.team; if (!tid) return;
-    const v = roundScore(r, tid);
-    const cellEl = tr.querySelector('[data-rt]');
-    if (cellEl) cellEl.textContent = v.any ? nfmt(v.v) : '–';
-    tr.classList.toggle('zone', !!zone[tid]);
+/* Typing in a cell must not re-render the card — that would steal focus
+   mid-keystroke — so the derived numbers are patched in place instead. */
+function repaintGame(gid){
+  const g = gameById(gid); if (!g) return;
+  const box = document.querySelector('[data-game="' + gid + '"]'); if (!box) return;
+  const p = elimPreview(g), zone = {}, pos = {};
+  if (g.status !== 'done') p.picks.forEach(x => { if (x.has) zone[x.t.id] = true; });
+  p.order.forEach((o, i) => { pos[o.t.id] = o.has ? i + 1 : '·'; });
+  box.querySelectorAll('.srow').forEach(row => {
+    const tid = row.dataset.team; if (!tid) return;
+    const n = row.querySelector('.pos');
+    if (n) n.textContent = pos[tid];
+    row.classList.toggle('zone', !!zone[tid]);
   });
 }
 
 /* ---------- the lock dialog ----------
    The one irreversible-feeling moment in the app, so it shows its work: the
-   full round order, who the rule picks, and a checkbox on every team in case
-   the host wants to overrule it (a tie, a disqualification, a judged game). */
-function lockModal(rid){
-  const r = roundById(rid); if (!r) return;
-  const p = elimPreview(r);
+   full order, who the rule picks, and a checkbox on every team in case the
+   host wants to overrule it (a tie, a disqualification, a judged game). */
+function lockModal(gid){
+  const g = gameById(gid); if (!g) return;
+  const p = elimPreview(g);
   const picked = {}; p.picks.forEach(x => picked[x.t.id] = true);
 
   const body =
     (p.unscored ? '<div class="warnbox">' + p.unscored + ' team' + (p.unscored === 1 ? ' has' : 's have') +
-      ' no score in this round at all. Locking now counts them as zero.</div>' : '') +
-    (p.tie ? '<div class="warnbox">The cut falls on a tie. Pick who goes out, or reopen the round and play a tie-breaker.</div>' : '') +
+      ' no score in this game. Locking now counts them as zero.</div>' : '') +
+    (p.tie ? '<div class="warnbox">The cut falls on a tie. Pick who goes out, or reopen the game and play a tie-breaker.</div>' : '') +
     '<div><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.09em;font-weight:600;margin-bottom:8px">' +
-      (state.rules.basis === 'total' ? 'Running total' : 'Round score') + ' — worst first</div>' +
+      (state.rules.basis === 'total' ? 'Running total' : 'Game score') + ' — worst first</div>' +
     p.worstFirst.map(x =>
       '<label class="pick' + (picked[x.t.id] ? ' on' : '') + '">' +
         '<input type="checkbox" data-elim="' + x.t.id + '"' + (picked[x.t.id] ? ' checked' : '') + '>' +
         '<span class="nm">' + dot(x.t) + (x.t.emoji ? esc(x.t.emoji) + ' ' : '') + esc(x.t.name) +
-          (x.rs.any ? '' : ' <span class="muted" style="font-weight:500">· not scored</span>') + '</span>' +
+          (x.has ? '' : ' <span class="muted" style="font-weight:500">· not scored</span>') + '</span>' +
         '<span class="v num">' + nfmt(x.v) + '</span></label>').join('') +
     '</div>';
 
-  openModal('Lock ' + esc(r.name), body,
+  openModal('Lock ' + esc(g.name), body,
     '<button class="btn gho" data-act="closemod">Cancel</button>' +
-    '<button class="btn pri" data-act="dolock" data-id="' + r.id + '">Confirm & lock</button>');
+    '<button class="btn pri" data-act="dolock" data-id="' + g.id + '">Confirm & lock</button>');
 }
 
 /* ---------- teams ---------- */
@@ -1082,7 +1065,7 @@ function vTeams(){
     '<div class="tcard' + (t.out != null ? ' gone' : '') + '">' +
       '<div class="av" style="border-color:' + esc(t.color) + '">' + (t.emoji || '🏳️') + '</div>' +
       '<div class="mid"><div class="nm">' + esc(t.name) + '</div>' +
-        '<div class="meta">' + (t.out != null ? '💀 out in round ' + t.out
+        '<div class="meta">' + (t.out != null ? '💀 out on game ' + t.out
           : (t.members ? esc(t.members) : nfmt(totalScore(t.id)) + ' pts')) + '</div></div>' +
       '<button class="btn sm gho noprsnt" data-act="editteam" data-id="' + t.id + '">Edit</button>' +
       '<button class="x noprsnt" data-act="delteam" data-id="' + t.id + '" title="Remove team">✕</button>' +
@@ -1091,15 +1074,15 @@ function vTeams(){
   const out = ts.filter(t => t.out != null);
   if (out.length) h += '<div class="sec-head"><h2>Knocked out</h2><span class="sub">in order of exit</span></div>' +
     '<div class="outlist">' + out.slice().sort((a, b) => a.out - b.out).map(t =>
-      '<span class="outpill">R' + t.out + ' · ' + esc(t.name) + '</span>').join('') + '</div>';
+      '<span class="outpill">G' + t.out + ' · ' + esc(t.name) + '</span>').join('') + '</div>';
   return h;
 }
 
 /* ---------- settings ---------- */
 function vSettings(){
   const r = state.rules;
-  const seg = (act, val, label, cur) =>
-    '<button class="' + (cur === val ? 'on' : '') + '" data-act="' + act + '" data-v="' + val + '">' + label + '</button>';
+  const seg = (act, val, lbl, cur) =>
+    '<button class="' + (cur === val ? 'on' : '') + '" data-act="' + act + '" data-v="' + val + '">' + lbl + '</button>';
 
   let h = '<div class="sec-head"><h2>Event</h2></div><div class="card pad grid">' +
     '<label class="f"><span>Event name</span><input id="evname" value="' + esc(state.event.name) + '"></label>' +
@@ -1110,13 +1093,13 @@ function vSettings(){
     '<span class="sub">changing these re-ranks everything instantly</span></div>' +
     '<div class="card pad grid">' +
     '<label class="f"><span>Who goes out</span><div class="seg">' +
-      seg('basis', 'round', 'Lowest that round', r.basis) +
+      seg('basis', 'game',  'Lowest that game', r.basis) +
       seg('basis', 'total', 'Lowest running total', r.basis) + '</div></label>' +
     '<label class="f"><span>Scoring direction</span><div class="seg">' +
       seg('dir', 'high', 'High score wins', r.direction) +
       seg('dir', 'low',  'Low score wins',  r.direction) + '</div></label>' +
-    '<label class="f"><span>Eliminated per round</span>' +
-      '<input id="perround" type="number" min="0" max="5" step="1" value="' + (r.perRound || 1) + '"></label>' +
+    '<label class="f"><span>Eliminated per game</span>' +
+      '<input id="pergame" type="number" min="0" max="5" step="1" value="' + (r.perGame || 1) + '"></label>' +
     '<div class="row"><button class="btn" data-act="saverules">Save rules</button>' +
       '<span class="muted" style="font-size:12.5px">The app never eliminates the last team standing, whatever this says.</span></div>' +
     '</div>';
@@ -1153,7 +1136,7 @@ function vSettings(){
     '<button class="btn" data-act="import">Import backup</button>' +
     '<button class="btn dgr" data-act="restart">Clear all scores</button>' +
     '<button class="btn dgr" data-act="wipe">Delete everything</button></div>' +
-    '<p class="muted" style="margin:10px 0 0;font-size:12.5px">“Clear all scores” keeps the teams, rounds and games, wipes every score and brings every team back in — the button for a second run of the same event.</p></div>';
+    '<p class="muted" style="margin:10px 0 0;font-size:12.5px">“Clear all scores” keeps the teams and games, wipes every score and brings every team back in — the button for a second run of the same event.</p></div>';
   return h;
 }
 
@@ -1182,7 +1165,7 @@ function teamModal(id){
       PALETTE.map(c => '<button data-c="' + c + '" class="' + (c === color ? 'on' : '') +
         '" style="background:' + c + '"></button>').join('') + '</div></label>' +
     (t && t.out != null
-      ? '<div class="warnbox">Eliminated in round ' + t.out + '. Bringing them back also reopens nothing else — the round stays locked.</div>' +
+      ? '<div class="warnbox">Eliminated on game ' + t.out + '. Bringing them back leaves that game locked.</div>' +
         '<div class="row"><button class="btn" data-act="revive" data-id="' + t.id + '">Bring back in</button></div>'
       : ''),
     '<button class="btn gho" data-act="closemod">Cancel</button>' +
@@ -1202,41 +1185,29 @@ function bulkModal(){
     '<button class="btn pri" data-act="dobulk">Add teams</button>');
 }
 
-function roundModal(id){
-  const r = id ? roundById(id) : null;
-  openModal(r ? 'Edit round' : 'New round',
-    '<label class="f"><span>Round name</span><input id="rn" value="' + esc(r ? r.name : '') + '" placeholder="Round ' +
-      ((rounds().slice(-1)[0] || { idx: 0 }).idx + 1) + '"></label>' +
-    '<label class="f"><span>Note</span><input id="rnote" value="' + esc(r ? r.note : '') + '" placeholder="optional — venue, time, theme"></label>' +
-    (r ? '<div class="row"><button class="btn dgr" data-act="delround" data-id="' + r.id + '">Delete this round</button></div>' : ''),
-    '<button class="btn gho" data-act="closemod">Cancel</button>' +
-    '<button class="btn pri" data-act="saveround" data-id="' + (r ? r.id : '') + '">' + (r ? 'Save' : 'Add round') + '</button>');
-}
-
-function gameModal(roundId, gameId){
-  const g = gameId ? gameById(gameId) : null;
+function gameModal(id){
+  const g = id ? gameById(id) : null;
   openModal(g ? 'Edit game' : 'New game',
     '<div class="two">' +
       '<label class="f"><span>Icon</span><input id="gi" value="' + esc(g ? g.icon : '') + '" placeholder="🎯" maxlength="4"></label>' +
       '<label class="f"><span>Game name</span><input id="gn" value="' + esc(g ? g.name : '') + '" placeholder="Tug of war"></label>' +
     '</div>' +
-    '<p class="muted" style="margin:0;font-size:12.5px">A round can hold several games. Each team’s round score is the sum of its games.</p>' +
+    '<label class="f"><span>Note</span><input id="gnote" value="' + esc(g ? g.note : '') + '" placeholder="optional — venue, time, rules"></label>' +
+    '<p class="muted" style="margin:0;font-size:12.5px">Every team gets a score in this game, and the lowest goes out when you lock it.</p>' +
     (g ? '<div class="row"><button class="btn dgr" data-act="delgame" data-id="' + g.id + '">Delete this game</button></div>' : ''),
     '<button class="btn gho" data-act="closemod">Cancel</button>' +
-    '<button class="btn pri" data-act="savegame" data-rid="' + (roundId || (g ? g.roundId : '')) +
-      '" data-id="' + (g ? g.id : '') + '">' + (g ? 'Save' : 'Add game') + '</button>');
+    '<button class="btn pri" data-act="savegame" data-id="' + (g ? g.id : '') + '">' + (g ? 'Save' : 'Add game') + '</button>');
 }
 
-/* ============================ one-game scorer ============================
-   The grid is right on a laptop. On a phone, walking one game down the list of
-   teams with a big +/- under your thumb is far better, so a tap on any game
-   header opens exactly that.                                                  */
+/* ============================ full-screen scorer ============================
+   The card list is right on a laptop. On a phone, one game filling the screen
+   with a big +/- under your thumb is better, so a game can be opened on its
+   own — same rows, nothing else competing for the space.                      */
 let curGame = null;
 
 function openScorer(gid){
   const g = gameById(gid); if (!g) return;
-  const r = roundById(g.roundId); if (!r) return;
-  if (r.status === 'done') { toast('Reopen round ' + r.idx + ' to change its scores'); return; }
+  if (g.status === 'done') { toast('Reopen ' + g.name + ' to change its scores'); return; }
   if (!guard()) return;
   curGame = gid;
   $('#scorer').classList.remove('hide');
@@ -1246,20 +1217,22 @@ function closeScorer(){ curGame = null; $('#scorer').classList.add('hide'); $('#
 
 function paintScorer(){
   const g = gameById(curGame); if (!g) { closeScorer(); return; }
-  const r = roundById(g.roundId);
-  const gs = gamesOf(r.id), pos = gs.findIndex(x => x.id === g.id);
-  const pool = state.teams.filter(t => inRound(t, r)).sort(bySort);
-  const p = elimPreview(r), zone = {};
-  p.picks.forEach(x => { if (x.rs.any) zone[x.t.id] = true; });
+  const gs = games(), pos = gs.findIndex(x => x.id === g.id);
+  const p = elimPreview(g), zone = {};
+  p.picks.forEach(x => { if (x.has) zone[x.t.id] = true; });
+  const nextOpen = gs.slice(pos + 1).find(x => x.status !== 'done');
+  const prevOpen = gs.slice(0, pos).reverse().find(x => x.status !== 'done');
 
   $('#scorer').innerHTML =
     '<div class="ovtop"><button class="iconbtn" data-act="closescorer">✕</button>' +
-      '<div><div class="t">' + (g.icon ? esc(g.icon) + ' ' : '') + esc(g.name) + '</div>' +
-      '<div class="s">' + esc(r.name) + ' · game ' + (pos + 1) + ' of ' + gs.length + '</div></div>' +
-      '<span style="margin-left:auto" class="chip">' + pool.length + ' teams</span></div>' +
-    '<div class="ovbody">' + pool.map(t => {
-      const v = cell(g.id, t.id);
+      '<div><div class="t">' + label(g) + '</div>' +
+      '<div class="s">Game ' + g.idx + ' of ' + gs.length + ' · ' +
+        p.order.filter(o => o.has).length + ' of ' + p.order.length + ' scored</div></div>' +
+      '<span style="margin-left:auto" class="chip">' + p.order.length + ' teams</span></div>' +
+    '<div class="ovbody">' + p.order.map((o, i) => {
+      const t = o.t, v = cell(g.id, t.id);
       return '<div class="srow' + (zone[t.id] ? ' zone' : '') + '">' +
+        '<span class="pos num">' + (o.has ? i + 1 : '·') + '</span>' +
         '<span class="nm">' + dot(t) + (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) + '</span>' +
         '<button class="stp" data-act="step" data-g="' + g.id + '" data-t="' + t.id + '" data-d="-1">−</button>' +
         '<input class="num" type="number" step="any" inputmode="decimal" data-g="' + g.id + '" data-t="' + t.id +
@@ -1268,21 +1241,20 @@ function paintScorer(){
       '</div>';
     }).join('') + '</div>' +
     '<div class="ovbot">' +
-      (pos > 0 ? '<button class="btn" data-act="gonext" data-id="' + gs[pos - 1].id + '">← ' + esc(gs[pos - 1].name) + '</button>' : '') +
+      (prevOpen ? '<button class="btn" data-act="gonext" data-id="' + prevOpen.id + '">← ' + esc(prevOpen.name) + '</button>' : '') +
       '<span style="margin-left:auto;display:flex;gap:8px">' +
-      (pos < gs.length - 1
-        ? '<button class="btn" data-act="gonext" data-id="' + gs[pos + 1].id + '">' + esc(gs[pos + 1].name) + ' →</button>'
-        : '<button class="btn pri" data-act="closescorer">Done</button>') +
+      '<button class="btn pri" data-act="lockfrom" data-id="' + g.id + '">Lock & eliminate</button>' +
+      (nextOpen ? '<button class="btn" data-act="gonext" data-id="' + nextOpen.id + '">' + esc(nextOpen.name) + ' →</button>' : '') +
       '</span></div>';
 }
 
 /* ============================ confirm ============================ */
 let pendingConfirm = null;
-function confirmModal(title, msg, label, fn){
+function confirmModal(title, msg, lbl, fn){
   pendingConfirm = fn;
   openModal(title, '<p style="margin:0;font-size:14px">' + msg + '</p>',
     '<button class="btn gho" data-act="closemod">Cancel</button>' +
-    '<button class="btn dgr" data-act="doconfirm">' + label + '</button>');
+    '<button class="btn dgr" data-act="doconfirm">' + lbl + '</button>');
 }
 
 /* ============================ actions ============================ */
@@ -1305,39 +1277,23 @@ document.addEventListener('click', e => {
     case 'dopin': tryPin(); break;
     case 'closescorer': closeScorer(); break;
 
-    /* ---- rounds ---- */
-    case 'togr': openRounds[id] = !(openRounds[id] !== undefined ? openRounds[id]
-                                     : (roundById(id) || {}).status !== 'done'); render(); break;
-    case 'addround': if (!guard()) break; addRound(); view = 'rounds'; render(); break;
-    case 'editround': roundModal(id); break;
-    case 'saveround': {
-      if (!guard()) break;
-      const nm = ($('#rn').value || '').trim(), note = ($('#rnote').value || '').trim();
-      if (id) { const r = roundById(id); if (r) { r.name = nm || r.name; r.note = note; syncRound(r); } }
-      else { const r = addRound(nm); r.note = note; syncRound(r); }
-      save(); closeModal(); render(); break;
-    }
-    case 'delround': {
-      const r = roundById(id); if (!r) break;
-      confirmModal('Delete ' + esc(r.name) + '?',
-        'Its games and every score in it go too. Teams eliminated in this round stay out until you bring them back from the Teams tab.',
-        'Delete round', () => { delRound(id); render(); toast('Round deleted'); });
-      break;
-    }
-
     /* ---- games ---- */
-    case 'addgame':  if (!guard()) break; gameModal(id, null); break;
-    case 'editgame': gameModal(null, id); break;
+    case 'togg': openGames[id] = !(openGames[id] !== undefined ? openGames[id]
+                                    : (gameById(id) || {}).status !== 'done'); render(); break;
+    case 'addgame': if (!guard()) break; gameModal(null); break;
+    case 'editgame': gameModal(id); break;
     case 'savegame': {
       if (!guard()) break;
-      const nm = ($('#gn').value || '').trim() || 'Game', ic = ($('#gi').value || '').trim();
-      if (id) { const g = gameById(id); if (g) { g.name = nm; g.icon = ic; syncGame(g); } }
-      else addGame(b.dataset.rid, nm, ic);
+      const nm = ($('#gn').value || '').trim(), ic = ($('#gi').value || '').trim();
+      const note = ($('#gnote').value || '').trim();
+      if (id) { const g = gameById(id); if (g) { g.name = nm || g.name; g.icon = ic; g.note = note; syncGame(g); } }
+      else { const g = addGame(nm, ic); g.note = note; syncGame(g); view = 'games'; }
       save(); closeModal(); render(); break;
     }
     case 'delgame': {
       const g = gameById(id); if (!g) break;
-      confirmModal('Delete ' + esc(g.name) + '?', 'Every score entered for this game is removed.',
+      confirmModal('Delete ' + esc(g.name) + '?',
+        'Every score in it goes too, the games after it renumber, and anyone it knocked out comes back in.',
         'Delete game', () => { delGame(id); render(); toast('Game deleted'); });
       break;
     }
@@ -1347,35 +1303,39 @@ document.addEventListener('click', e => {
       const g = b.dataset.g, t = b.dataset.t, d = Number(b.dataset.d);
       const now = cell(g, t) || 0;
       setCell(g, t, now + d);
-      const inp = $('#scorer').querySelector('input[data-g="' + g + '"][data-t="' + t + '"]');
-      if (inp) inp.value = now + d;
-      paintScorer();
+      if (b.closest('#scorer')) paintScorer();
+      else {
+        const inp = document.querySelector('.gcard input[data-g="' + g + '"][data-t="' + t + '"]');
+        if (inp) inp.value = now + d;
+        repaintGame(g);
+      }
       break;
     }
 
     /* ---- lock / unlock ---- */
+    case 'lockfrom': closeScorer();      // fall through to the same dialog
     case 'lock': {
       if (!guard()) break;
-      const r = roundById(id); if (!r) break;
-      if (state.rules.confirm === false) lockRound(r, elimPreview(r).picks.map(x => x.t.id));
+      const g = gameById(id); if (!g) break;
+      if (state.rules.confirm === false) lockGame(g, elimPreview(g).picks.map(x => x.t.id));
       else lockModal(id);
       break;
     }
     case 'dolock': {
-      const r = roundById(id); if (!r) break;
+      const g = gameById(id); if (!g) break;
       const ids = Array.prototype.slice.call($('#modal').querySelectorAll('[data-elim]'))
         .filter(c => c.checked).map(c => c.dataset.elim);
-      if (ids.length >= state.teams.filter(t => inRound(t, r)).length) { toast('You cannot eliminate every team'); break; }
-      closeModal(); lockRound(r, ids); break;
+      if (ids.length >= state.teams.filter(t => inGame(t, g)).length) { toast('You cannot eliminate every team'); break; }
+      closeModal(); lockGame(g, ids); break;
     }
     case 'unlock': {
       if (!guard()) break;
-      const r = roundById(id); if (!r) break;
-      confirmModal('Reopen ' + esc(r.name) + '?',
-        (r.elim && r.elim.length
-          ? esc(r.elim.map(teamName).join(' and ')) + ' come back in and the scores become editable again.'
+      const g = gameById(id); if (!g) break;
+      confirmModal('Reopen ' + esc(g.name) + '?',
+        (g.elim && g.elim.length
+          ? esc(g.elim.map(teamName).join(' and ')) + ' come back in and the scores become editable again.'
           : 'The scores become editable again.'),
-        'Reopen round', () => unlockRound(r));
+        'Reopen game', () => unlockGame(g));
       break;
     }
 
@@ -1413,8 +1373,8 @@ document.addEventListener('click', e => {
     }
     case 'revive': {
       const t = teamById(id); if (!t) break;
-      const r = rounds().find(x => (x.elim || []).indexOf(id) >= 0);
-      if (r) { r.elim = r.elim.filter(x => x !== id); syncRound(r); }
+      const g = games().find(x => (x.elim || []).indexOf(id) >= 0);
+      if (g) { g.elim = g.elim.filter(x => x !== id); syncGame(g); }
       t.out = null; syncTeam(t); save(); closeModal(); render();
       toast(t.name + ' is back in');
       break;
@@ -1438,8 +1398,8 @@ document.addEventListener('click', e => {
     case 'dir':   if (!guard()) break; state.rules.direction = b.dataset.v; save(); syncConfig(); render(); break;
     case 'saverules': {
       if (!guard()) break;
-      const n = parseInt($('#perround').value, 10);
-      state.rules.perRound = isFinite(n) ? Math.max(0, Math.min(5, n)) : 1;
+      const n = parseInt($('#pergame').value, 10);
+      state.rules.perGame = isFinite(n) ? Math.max(0, Math.min(5, n)) : 1;
       save(); syncConfig(); render(); toast('Rules saved');
       break;
     }
@@ -1489,11 +1449,11 @@ document.addEventListener('click', e => {
     }
     case 'restart':
       if (!guard()) break;
-      confirmModal('Clear all scores?', 'Teams, rounds and games stay. Every score is wiped and every team comes back in.',
+      confirmModal('Clear all scores?', 'Teams and games stay. Every score is wiped and every team comes back in.',
         'Clear scores', () => {
           state.scores = {};
           state.teams.forEach(t => { t.out = null; });
-          state.rounds.forEach(r => { r.status = 'active'; r.elim = []; r.lockedAt = 0; });
+          state.games.forEach(g => { g.status = 'active'; g.elim = []; g.lockedAt = 0; });
           save();
           if (online() && cloud.pin) enqueue('gauntlet_restart', { p_pin: cloud.pin }, 'restart');
           render(); toast('Scores cleared');
@@ -1501,7 +1461,7 @@ document.addEventListener('click', e => {
       break;
     case 'wipe':
       if (!guard()) break;
-      confirmModal('Delete everything?', 'Teams, rounds, games and scores — all of it, on this device and in the database.',
+      confirmModal('Delete everything?', 'Teams, games and scores — all of it, on this device and in the database.',
         'Delete everything', () => {
           const wasOnline = online() && cloud.pin;
           outbox = []; saveOutbox();
@@ -1520,17 +1480,14 @@ document.addEventListener('input', e => {
   if (!guard()) { el.value = ''; return; }
   const raw = el.value.trim();
   setCell(el.dataset.g, el.dataset.t, raw === '' ? null : Number(raw));
-  const g = gameById(el.dataset.g);
-  if (g && !el.closest('#scorer')) repaintRound(g.roundId);
+  if (!el.closest('#scorer')) repaintGame(el.dataset.g);
 });
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.dataset && el.dataset.elim) { el.closest('.pick').classList.toggle('on', el.checked); return; }
-  if (el.dataset && el.dataset.g && el.dataset.t && !el.closest('#scorer')) {
-    const g = gameById(el.dataset.g); if (g) repaintRound(g.roundId);
-  }
+  if (el.dataset && el.dataset.g && el.dataset.t && !el.closest('#scorer')) repaintGame(el.dataset.g);
 });
-/* Enter moves down the column — the way you actually read scores off a sheet */
+/* Enter moves to the next team — the way you actually read scores off a sheet */
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (!$('#modal').classList.contains('hide')) { closeModal(); return; }
@@ -1539,7 +1496,8 @@ document.addEventListener('keydown', e => {
   const el = e.target;
   if (e.key !== 'Enter' || !el.dataset || !el.dataset.g) return;
   const all = Array.prototype.slice.call(
-    (el.closest('#scorer') || document).querySelectorAll('input[data-g="' + el.dataset.g + '"]'));
+    (el.closest('#scorer') || el.closest('.gcard') || document)
+      .querySelectorAll('input[data-g="' + el.dataset.g + '"]'));
   const i = all.indexOf(el);
   if (i >= 0 && i < all.length - 1) { e.preventDefault(); all[i + 1].focus(); all[i + 1].select(); }
 });
