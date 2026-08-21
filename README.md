@@ -4,6 +4,8 @@ Fun-games event scoring for **8–10 teams**. Every team gets a score in every
 game, and at the end of each round the rules knock somebody out. Keep going
 until one team is left standing.
 
+**Live:** https://patelhari1109-lang.github.io/gauntlet/
+
 Single self-contained `index.html`. No build step, no framework, no bundler.
 
 ---
