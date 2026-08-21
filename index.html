@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="author" content="Hari Patel">
+<meta name="description" content="Elimination scoreboard for a fun games event — score every team in every game, knock one out each round, last team standing wins. Built by Hari Patel.">
+<title>Gauntlet — Elimination Scoreboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f17; --panel:#121a26; --panel2:#172131; --line:#243147; --line2:#31425e;
+  --tx:#e9eff8; --mut:#8fa0b8; --mut2:#61728c;
+  --acc:#f59e0b; --acc2:#a78bfa; --good:#34d399; --warn:#fbbf24; --bad:#fb7185;
+  --r:14px; --sh:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1100px 600px at 12% -10%, #2a1f16 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #1e1a33 0%, transparent 55%),
+    var(--bg);
+  background-attachment:fixed;
+  color:var(--tx); font-family:'Outfit',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  font-size:15px; line-height:1.45; -webkit-font-smoothing:antialiased;
+  padding-bottom:60px;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.02em}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);
+  background:rgba(11,15,23,.82);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:14px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.03em}
+.brand .dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#a78bfa);box-shadow:0 0 14px #f59e0b}
+.brand small{display:block;font-size:10.5px;font-weight:500;color:var(--mut2);letter-spacing:.14em;text-transform:uppercase;line-height:1}
+nav{display:flex;gap:2px;margin-left:auto;background:var(--panel);border:1px solid var(--line);padding:4px;border-radius:11px}
+nav button{padding:7px 13px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--mut)}
+nav button:hover{color:var(--tx)}
+nav button.on{background:var(--panel2);color:var(--tx);box-shadow:inset 0 0 0 1px var(--line2)}
+.iconbtn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
+  display:grid;place-items:center;font-size:15px;color:var(--mut)}
+.iconbtn:hover{color:var(--tx);border-color:var(--line2)}
+@media(max-width:700px){
+  .top .wrap{height:auto;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+  nav{order:3;width:100%;margin-left:0;overflow-x:auto}
+  nav button{flex:1;white-space:nowrap}
+}
+
+/* ---------- generic ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.pad{padding:16px}
+.sec-head{display:flex;align-items:center;gap:10px;margin:26px 0 12px;flex-wrap:wrap}
+.sec-head h2{font-size:17px}
+.sec-head .sub{color:var(--mut2);font-size:12.5px;font-weight:500}
+.sec-head .sp{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:9px 15px;border-radius:10px;background:var(--panel2);border:1px solid var(--line2);
+  font-weight:600;font-size:13.5px;color:var(--tx);transition:.12s}
+.btn:hover{background:#1e2b3f}
+.btn.pri{background:linear-gradient(135deg,#f59e0b,#f0740b);border-color:transparent;color:#231202;
+  box-shadow:0 6px 18px rgba(245,158,11,.26)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.gho{background:transparent;border-color:var(--line)}
+.btn.dgr{color:var(--bad);border-color:#4a2733;background:transparent}
+.btn.dgr:hover{background:#2a1720}
+.btn.sm{padding:6px 11px;font-size:12.5px;border-radius:8px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+input,select,textarea{background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:9px 11px;width:100%;outline:none}
+input:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+label.f{display:block}
+label.f span{display:block;font-size:11.5px;font-weight:600;color:var(--mut2);
+  text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px}
+.grid{display:grid;gap:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;
+  font-size:11.5px;font-weight:600;border:1px solid var(--line2);background:var(--panel2);color:var(--mut)}
+.chip.live{border-color:#7f5a2d;background:#2a2116;color:#fbbf24}
+.chip.live::before{content:"";width:6px;height:6px;border-radius:50%;background:#fbbf24;animation:pulse 1.2s infinite}
+.chip.done{border-color:#1f4a3a;background:#122a22;color:#4ade80}
+.chip.out{border-color:#7f2d3c;background:#2a1620;color:#ff8fa3}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.empty{text-align:center;padding:38px 16px;color:var(--mut2);font-size:14px}
+.empty .big{font-size:30px;margin-bottom:8px;opacity:.5}
+.muted{color:var(--mut2)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:700;color:var(--mut2);text-transform:uppercase;
+  letter-spacing:.09em;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:11px 12px;border-bottom:1px solid rgba(36,49,71,.55);font-size:14px}
+tr:last-child td{border-bottom:none}
+th.r,td.r{text-align:right}
+th.c,td.c{text-align:center}
+.scroll{overflow-x:auto}
+
+/* ---------- champion ---------- */
+.champ{position:relative;overflow:hidden;border-radius:18px;border:1px solid var(--acc);
+  background:var(--panel);padding:26px 20px;text-align:center;margin-bottom:14px}
+.champ::before{content:"";position:absolute;inset:0;opacity:.18;
+  background:radial-gradient(520px 220px at 50% 0%,var(--c,#f59e0b),transparent 70%)}
+.champ>*{position:relative}
+.champ .lbl{font-size:11.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--acc)}
+.champ .nm{font-size:clamp(30px,7vw,52px);font-weight:800;letter-spacing:-.04em;margin:6px 0 2px;
+  display:flex;align-items:center;justify-content:center;gap:12px}
+.champ .sub{color:var(--mut);font-size:13.5px}
+
+/* ---------- podium ---------- */
+.podium{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
+@media(max-width:760px){.podium{grid-template-columns:1fr}}
+.pcard{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--line);
+  background:var(--panel);padding:18px}
+.pcard::before{content:"";position:absolute;inset:0;opacity:.14;
+  background:radial-gradient(420px 180px at 15% 0%,var(--c),transparent 70%)}
+.pcard.first{border-color:var(--c)}
+.pcard.gone{opacity:.62}
+.pcard>*{position:relative}
+.pcard .rk{position:absolute;top:0;right:0;font-size:52px;font-weight:800;color:var(--c);
+  opacity:.16;line-height:1;letter-spacing:-.05em}
+.pcard .nm{font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px}
+.pcard .nm i{width:9px;height:9px;border-radius:50%;background:var(--c);font-style:normal;flex:none}
+.pcard .tot{font-size:44px;font-weight:800;letter-spacing:-.045em;line-height:1.05;margin-top:8px}
+.pcard .tot small{font-size:13px;font-weight:600;color:var(--mut2);letter-spacing:0;margin-left:6px}
+.bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:12px 0}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--c);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.split{display:flex;gap:6px;flex-wrap:wrap}
+.split .g{flex:1;min-width:88px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:10px;padding:8px 10px}
+.split .g b{display:block;font-size:17px;font-weight:700}
+.split .g span{font-size:10.5px;color:var(--mut2);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+
+/* ---------- stat strip ---------- */
+.stats{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:1.15}
+.stat span{font-size:10.5px;color:var(--mut2);font-weight:600;text-transform:uppercase;letter-spacing:.09em}
+
+/* ---------- survival grid ---------- */
+.sgrid td,.sgrid th{white-space:nowrap}
+.sgrid .tm{display:flex;align-items:center;gap:9px;font-weight:600}
+.sgrid .tm i{width:9px;height:9px;border-radius:50%;font-style:normal;flex:none}
+.sgrid tr.gone .tm{color:var(--mut2)}
+.sgrid tr.gone .tm i{opacity:.45}
+.cell{display:inline-flex;min-width:44px;justify-content:center;padding:3px 8px;border-radius:8px;
+  font-weight:700;font-variant-numeric:tabular-nums;background:var(--panel2);border:1px solid var(--line)}
+.cell.best{border-color:#1f4a3a;background:#122a22;color:#4ade80}
+.cell.worst{border-color:#7f2d3c;background:#2a1620;color:#ff8fa3}
+.cell.none{background:transparent;border-color:transparent;color:var(--mut2);font-weight:500}
+.cell.dead{background:transparent;border-color:transparent;color:var(--mut2);opacity:.5}
+.rk{font-variant-numeric:tabular-nums;font-weight:700;color:var(--mut2);width:26px}
+.tot{font-variant-numeric:tabular-nums;font-weight:800;font-size:16px}
+
+/* ---------- rounds ---------- */
+.rcard{border-radius:14px;border:1px solid var(--line);background:var(--panel);overflow:hidden;margin-bottom:12px}
+.rcard.act{border-color:#7f5a2d}
+.rhead{display:flex;align-items:center;gap:12px;padding:14px 16px;width:100%;text-align:left;flex-wrap:wrap}
+.rtoggle{flex:1;display:flex;align-items:center;gap:12px;text-align:left;min-width:0}
+.rtoggle:hover .nm{color:#fff}
+.rhead .ix{width:38px;height:38px;flex:none;border-radius:10px;background:var(--panel2);border:1px solid var(--line);
+  display:grid;place-items:center;font-weight:800;font-size:15px;color:var(--mut)}
+.rcard.act .rhead .ix{border-color:#7f5a2d;background:#2a2116;color:#fbbf24}
+.rhead .mid{flex:1;min-width:0}
+.rhead .nm{font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.rhead .meta{font-size:12px;color:var(--mut2);margin-top:3px}
+.rbody{border-top:1px solid var(--line);padding:14px 16px}
+.gtab{min-width:100%;border-collapse:separate;border-spacing:0}
+.gtab th,.gtab td{border-bottom:1px solid rgba(36,49,71,.55);padding:8px 10px}
+.gtab th.tm,.gtab td.tm{position:sticky;left:0;background:var(--panel);z-index:2;min-width:150px}
+.gtab td.tm{font-weight:600}
+.gtab .gh{text-align:center;min-width:96px}
+.gtab .gh button{font-size:11px;font-weight:700;color:var(--mut2);text-transform:uppercase;letter-spacing:.08em;
+  padding:4px 8px;border-radius:7px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gtab .gh button:hover{color:var(--tx);background:var(--panel2)}
+.gtab input.sc{width:76px;text-align:center;padding:7px 6px;font-weight:700;font-variant-numeric:tabular-nums;
+  border-radius:9px;background:var(--bg)}
+.gtab input.sc::-webkit-outer-spin-button,.gtab input.sc::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.gtab input.sc{-moz-appearance:textfield}
+.gtab tr.zone td{background:rgba(251,113,133,.07)}
+.gtab tr.zone td.tm{background:#1b141b}
+.gtab td.rt{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:15px}
+.zoneflag{font-size:10.5px;font-weight:700;color:#ff8fa3;letter-spacing:.06em;text-transform:uppercase}
+.gwrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
+.outlist{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.outpill{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:99px;
+  border:1px solid #7f2d3c;background:#2a1620;color:#ff8fa3;font-size:12.5px;font-weight:600}
+
+/* ---------- game scorer overlay ---------- */
+.ov{position:fixed;inset:0;z-index:100;background:#080b12;display:flex;flex-direction:column;animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.ov.hide{display:none}
+.ovtop{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex:none}
+.ovtop .t{font-weight:700;font-size:15px}
+.ovtop .s{font-size:12px;color:var(--mut2)}
+.ovbody{flex:1;overflow:auto;padding:12px 16px 20px}
+.srow{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:13px;background:var(--panel);
+  border:1px solid var(--line);margin-bottom:9px}
+.srow.zone{border-color:#7f2d3c}
+.srow .nm{flex:1;min-width:0;font-weight:600;display:flex;align-items:center;gap:9px}
+.srow .nm i{width:9px;height:9px;border-radius:50%;font-style:normal;flex:none}
+.srow .stp{width:42px;height:42px;flex:none;border-radius:11px;border:1px solid var(--line2);
+  background:var(--panel2);font-size:19px;font-weight:700;display:grid;place-items:center}
+.srow .stp:active{transform:scale(.94)}
+.srow input{width:76px;text-align:center;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;
+  padding:7px 4px;flex:none}
+.ovbot{flex:none;padding:10px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ---------- modal ---------- */
+.mod{position:fixed;inset:0;z-index:90;background:rgba(6,9,15,.72);backdrop-filter:blur(4px);
+  display:flex;align-items:flex-end;justify-content:center;animation:fade .16s}
+@media(min-width:640px){.mod{align-items:center}}
+.mod.hide{display:none}
+.sheet{background:var(--panel);border:1px solid var(--line2);border-radius:18px 18px 0 0;
+  width:100%;max-width:520px;max-height:92vh;overflow:auto;box-shadow:var(--sh);animation:up .2s cubic-bezier(.2,.8,.2,1)}
+@media(min-width:640px){.sheet{border-radius:18px}}
+@keyframes up{from{transform:translateY(24px);opacity:.5}to{transform:none;opacity:1}}
+.sheet .hd{display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--panel);z-index:2}
+.sheet .hd h3{font-size:16px}
+.sheet .bd{padding:18px;display:grid;gap:13px}
+.sheet .ft{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end;
+  position:sticky;bottom:0;background:var(--panel)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line2);padding:4px;border-radius:10px}
+.seg button{flex:1;padding:7px;border-radius:7px;font-size:13px;font-weight:600;color:var(--mut)}
+.seg button.on{background:var(--panel2);color:var(--tx);box-shadow:inset 0 0 0 1px var(--line2)}
+.tog{display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 0}
+.tog input{width:auto;margin:0}
+.tog div{flex:1}
+.tog b{display:block;font-size:14px;font-weight:600}
+.pick{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);
+  background:var(--panel2);cursor:pointer;margin-bottom:8px}
+.pick.on{border-color:#7f2d3c;background:#2a1620}
+.pick input{width:auto;margin:0;flex:none}
+.pick .nm{flex:1;font-weight:600;display:flex;align-items:center;gap:8px}
+.pick .nm i{width:9px;height:9px;border-radius:50%;font-style:normal;flex:none}
+.pick .v{font-weight:800;font-variant-numeric:tabular-nums}
+.warnbox{border:1px solid #7f5a2d;background:#2a2116;color:#fbbf24;border-radius:11px;padding:10px 12px;font-size:13px}
+
+/* ---------- teams ---------- */
+.tgrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.tcard{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:13px;background:var(--panel);
+  border:1px solid var(--line)}
+.tcard.gone{opacity:.6;border-style:dashed}
+.tcard .av{width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;font-size:18px;
+  background:var(--panel2);border:1px solid var(--line)}
+.tcard .mid{flex:1;min-width:0}
+.tcard .nm{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcard .meta{font-size:12px;color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcard .x{color:var(--mut2);font-size:15px;padding:4px 7px;border-radius:7px;flex:none}
+.tcard .x:hover{color:var(--bad);background:#2a1720}
+.swatch{display:flex;gap:7px;flex-wrap:wrap}
+.swatch button{width:26px;height:26px;border-radius:8px;border:2px solid transparent}
+.swatch button.on{border-color:var(--tx)}
+
+/* ---------- toast + confetti ---------- */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;display:grid;gap:8px;
+  justify-items:center;pointer-events:none}
+.tst{background:#1c2635;border:1px solid var(--line2);padding:10px 18px;border-radius:99px;font-size:13.5px;
+  font-weight:600;box-shadow:var(--sh);animation:up .2s}
+.cf{position:fixed;width:9px;height:14px;z-index:300;pointer-events:none;border-radius:2px}
+
+/* ---------- sync pill ---------- */
+.netpill{padding:6px 11px;border-radius:99px;border:1px solid var(--line);background:var(--panel);
+  font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--mut);white-space:nowrap}
+.netpill.ok{color:#4ade80;border-color:#1f4a3a;background:#122a22}
+.netpill.busy{color:var(--warn);border-color:#4a3d1f;background:#26200f}
+.netpill.error{color:#ff8fa3;border-color:#7f2d3c;background:#2a1620}
+.tline{font-size:13px;padding:4px 0;color:var(--mut)}
+.tline.good{color:#4ade80}
+.tline.bad{color:#ff8fa3}
+.cloudbox{display:grid;gap:11px}
+
+/* ---------- credit ---------- */
+.credit{margin:40px auto 8px;text-align:center;font-size:11.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--mut2);opacity:.5;transition:opacity .2s;font-weight:500}
+.credit:hover{opacity:.9}
+.credit b{font-weight:600;color:var(--mut)}
+
+/* ---------- present mode ---------- */
+body.present .top nav,body.present .sec-head .sp,body.present .noprsnt{display:none}
+body.present .pcard .tot{font-size:56px}
+body.present .pcard .nm{font-size:25px}
+body.present{font-size:17px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span><div>Gauntlet<small>Elimination</small></div></div>
+    <nav>
+      <button data-view="board" class="on">Standings</button>
+      <button data-view="rounds">Rounds</button>
+      <button data-view="teams">Teams</button>
+      <button data-view="settings">Settings</button>
+    </nav>
+    <button class="netpill off" id="netpill" title="Sync status">○ Local</button>
+    <button class="iconbtn" id="presentBtn" title="Present mode (big screen)">⛶</button>
+  </div>
+</header>
+
+<main class="wrap" id="view"></main>
+<footer class="credit wrap">Gauntlet · Designed &amp; built by <b>Hari Patel</b></footer>
+
+<div class="ov hide" id="scorer"></div>
+<div class="mod hide" id="modal"></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============================ state ============================ */
+const KEY = 'gauntlet.v1';
+const uid = () => Math.random().toString(36).slice(2, 9);
+const $  = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const PALETTE = ['#f59e0b','#22d3ee','#a78bfa','#34d399','#fb7185','#60a5fa',
+                 '#f472b6','#facc15','#4ade80','#c084fc','#38bdf8','#fb923c'];
+
+const DEFAULTS = {
+  version: 1,
+  event: { name: 'Fun Games', tagline: 'Last team standing' },
+  /* basis     — what decides who goes out: this round's score, or the running total
+     perRound  — how many teams are knocked out at the end of each round
+     direction — 'high' = high score is good, 'low' = low score is good (times, penalties)
+     confirm   — show the elimination preview before it is applied                */
+  rules: { basis: 'round', perRound: 1, direction: 'high', confirm: true },
+  teams:  [],   // { id, name, color, emoji, members, out, sort }   out = round idx it went out in
+  rounds: [],   // { id, idx, name, note, status, elim[], lockedAt }
+  games:  [],   // { id, roundId, name, icon, sort }
+  scores: {}    // 'gameId|teamId' -> number
+};
+
+let state = load();
+let view = 'board';
+let openRounds = {};        // which round cards are expanded
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) return migrate(JSON.parse(raw));
+  } catch (e) { console.warn('load failed', e); }
+  return clone(DEFAULTS);
+}
+function migrate(s){
+  const d = clone(DEFAULTS);
+  if (!s || typeof s !== 'object') return d;
+  s.version = 1;
+  s.event   = Object.assign({}, d.event, s.event || {});
+  s.rules   = Object.assign({}, d.rules, s.rules || {});
+  s.teams   = Array.isArray(s.teams)  ? s.teams  : [];
+  s.rounds  = Array.isArray(s.rounds) ? s.rounds : [];
+  s.games   = Array.isArray(s.games)  ? s.games  : [];
+  s.scores  = (s.scores && typeof s.scores === 'object') ? s.scores : {};
+  s.teams.forEach((t, i) => { if (t.sort == null) t.sort = i; if (t.out === undefined) t.out = null; });
+  s.rounds.forEach(r => { if (!Array.isArray(r.elim)) r.elim = []; });
+  return s;
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){ toast('Storage full — export a backup'); } }
+
+/* ============================ cloud sync ============================ */
+/* Optional Supabase backend. Without it the app runs on localStorage alone.
+   With it, every device sees the same board — the projector, the host's phone,
+   and every player watching from their own seat.
+   The key held in the page is read-only by design: all writes go through
+   passcode-checked RPCs (see supabase-setup.sql), so a player who reads the
+   page source still cannot edit a score or revive their own team. Local storage
+   stays the working copy, so a dropped wifi connection never interrupts
+   scoring — edits queue in an outbox and flush when the network returns.      */
+const CKEY = 'gauntlet.cloud', OKEY = 'gauntlet.outbox';
+const readLS = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch(e){ return d; } };
+let cloud  = readLS(CKEY, {});
+let outbox = readLS(OKEY, []);
+let net = { state: 'off', msg: 'Local only', rev: '' };   // off | ok | busy | error
+let flushing = false, pulling = false;
+
+const online  = () => !!(cloud.url && cloud.key);
+const canEdit = () => !online() || !!cloud.pin;
+const saveCloud  = () => localStorage.setItem(CKEY, JSON.stringify(cloud));
+const saveOutbox = () => localStorage.setItem(OKEY, JSON.stringify(outbox));
+
+function api(path, opts){
+  return fetch(String(cloud.url).replace(/\/+$/, '') + '/rest/v1/' + path, Object.assign({
+    headers: { apikey: cloud.key, Authorization: 'Bearer ' + cloud.key,
+               'Content-Type': 'application/json', Accept: 'application/json' }
+  }, opts || {}));
+}
+const rpc = (fn, args) => api('rpc/' + fn, { method: 'POST', body: JSON.stringify(args || {}) });
+
+/* ---- row <-> app object mapping ---- */
+const rowToTeam = r => ({ id: r.id, name: r.name, color: r.color || PALETTE[0], emoji: r.emoji || '',
+  members: r.members || '', out: r.out_round == null ? null : r.out_round, sort: r.sort || 0 });
+const teamPayload = t => ({ id: t.id, name: t.name, color: t.color || '', emoji: t.emoji || '',
+  members: t.members || '', out: t.out == null ? '' : t.out, sort: t.sort || 0 });
+
+const rowToRound = r => ({ id: r.id, idx: r.idx, name: r.name, note: r.note || '',
+  status: r.status, elim: Array.isArray(r.elim) ? r.elim : [], lockedAt: r.locked_at || 0 });
+const roundPayload = r => ({ id: r.id, idx: r.idx, name: r.name, note: r.note || '',
+  status: r.status, elim: r.elim || [], lockedAt: r.lockedAt || '' });
+
+const rowToGame = r => ({ id: r.id, roundId: r.round_id, name: r.name, icon: r.icon || '', sort: r.sort || 0 });
+const gamePayload = g => ({ id: g.id, roundId: g.roundId, name: g.name, icon: g.icon || '', sort: g.sort || 0 });
+
+/* ---- outbox: survives a refresh, coalesces rapid taps on one cell ---- */
+function enqueue(fn, args, key){
+  if (!online()) return;
+  if (key) outbox = outbox.filter(j => j.k !== key);
+  outbox.push({ fn: fn, args: args, k: key || null });
+  saveOutbox(); netPaint(); flush();
+}
+const syncTeam     = t  => enqueue('gauntlet_upsert_team',  { p_pin: cloud.pin, p: teamPayload(t) }, 't:' + t.id);
+const syncDelTeam  = id => enqueue('gauntlet_delete_team',  { p_pin: cloud.pin, p_id: id }, 'dt:' + id);
+const syncRound    = r  => enqueue('gauntlet_upsert_round', { p_pin: cloud.pin, p: roundPayload(r) }, 'r:' + r.id);
+const syncDelRound = id => enqueue('gauntlet_delete_round', { p_pin: cloud.pin, p_id: id }, 'dr:' + id);
+const syncGame     = g  => enqueue('gauntlet_upsert_game',  { p_pin: cloud.pin, p: gamePayload(g) }, 'g:' + g.id);
+const syncDelGame  = id => enqueue('gauntlet_delete_game',  { p_pin: cloud.pin, p_id: id }, 'dg:' + id);
+const syncScore    = (gid, tid, v) => enqueue('gauntlet_set_score',
+  { p_pin: cloud.pin, p_game: gid, p_team: tid, p_value: v }, 's:' + gid + '|' + tid);
+const syncConfig   = () => enqueue('gauntlet_save_config',  { p_pin: cloud.pin,
+  p: { event: state.event, rules: state.rules } }, 'cfg');
+
+async function flush(){
+  if (flushing || !online() || !cloud.pin || !outbox.length) return;
+  flushing = true; net.state = 'busy'; netPaint();
+  while (outbox.length) {
+    const job = outbox[0];
+    job.args.p_pin = cloud.pin;                       // always send the current passcode
+    try {
+      const r = await rpc(job.fn, job.args);
+      if (!r.ok) {
+        const body = await r.text();
+        if (r.status === 401 || r.status === 403 || /passcode/i.test(body)) {
+          cloud.pin = ''; saveCloud();
+          net.state = 'error'; net.msg = 'Passcode rejected — sign in again';
+          flushing = false; netPaint(); render(); return;
+        }
+        throw new Error(body);
+      }
+      outbox.shift(); saveOutbox();
+    } catch (e) {
+      net.state = 'error';
+      net.msg = outbox.length + ' change' + (outbox.length === 1 ? '' : 's') + ' waiting to sync';
+      flushing = false; netPaint(); return;
+    }
+  }
+  flushing = false; net.state = 'ok'; net.msg = 'Synced'; netPaint();
+}
+
+async function pull(){
+  if (!online() || pulling) return;
+  pulling = true;
+  try {
+    const [cfg, teams, rounds, games, scores] = await Promise.all([
+      api('gauntlet_config?select=*&id=eq.1').then(r => r.json()),
+      api('gauntlet_teams?select=*').then(r => r.json()),
+      api('gauntlet_rounds?select=*').then(r => r.json()),
+      api('gauntlet_games?select=*').then(r => r.json()),
+      api('gauntlet_scores?select=*').then(r => r.json())
+    ]);
+    if (Array.isArray(cfg) && cfg[0]) {
+      state.event = Object.assign({}, DEFAULTS.event, cfg[0].event || {});
+      state.rules = Object.assign({}, DEFAULTS.rules, cfg[0].rules || {});
+    }
+    /* Anything still queued locally is newer than what the server can tell me,
+       so it must survive the merge. */
+    const held = new Set(outbox.filter(j => /upsert_team$/.test(j.fn)).map(j => j.args.p.id));
+    if (Array.isArray(teams)) {
+      const mine = {}; state.teams.forEach(t => { if (held.has(t.id)) mine[t.id] = t; });
+      state.teams = teams.map(r => mine[r.id] || rowToTeam(r));
+      Object.keys(mine).forEach(id => { if (!state.teams.some(t => t.id === id)) state.teams.push(mine[id]); });
+    }
+    const heldR = new Set(outbox.filter(j => /upsert_round$/.test(j.fn)).map(j => j.args.p.id));
+    if (Array.isArray(rounds)) {
+      const mine = {}; state.rounds.forEach(r => { if (heldR.has(r.id)) mine[r.id] = r; });
+      state.rounds = rounds.map(r => mine[r.id] || rowToRound(r));
+      Object.keys(mine).forEach(id => { if (!state.rounds.some(r => r.id === id)) state.rounds.push(mine[id]); });
+    }
+    const heldG = new Set(outbox.filter(j => /upsert_game$/.test(j.fn)).map(j => j.args.p.id));
+    if (Array.isArray(games)) {
+      const mine = {}; state.games.forEach(g => { if (heldG.has(g.id)) mine[g.id] = g; });
+      state.games = games.map(r => mine[r.id] || rowToGame(r));
+      Object.keys(mine).forEach(id => { if (!state.games.some(g => g.id === id)) state.games.push(mine[id]); });
+    }
+    if (Array.isArray(scores)) {
+      const pending = {};
+      outbox.filter(j => /set_score$/.test(j.fn))
+            .forEach(j => { pending[j.args.p_game + '|' + j.args.p_team] = j.args.p_value; });
+      const next = {};
+      scores.forEach(r => { next[r.game_id + '|' + r.team_id] = Number(r.value); });
+      Object.keys(pending).forEach(k => {
+        if (pending[k] == null) delete next[k]; else next[k] = pending[k];
+      });
+      state.scores = next;
+    }
+    save();
+    if (net.state !== 'busy') { net.state = 'ok'; net.msg = 'Synced'; }
+  } catch (e) {
+    net.state = 'error'; net.msg = 'Cannot reach the database';
+  }
+  pulling = false; netPaint();
+  if (curGame && !$('#scorer').classList.contains('hide')) paintScorer(); else render();
+}
+
+async function tick(){
+  if (!online()) return;
+  await flush();
+  try {
+    const r = await rpc('gauntlet_revision');
+    if (!r.ok) throw new Error('revision');
+    const rev = JSON.stringify(await r.json());
+    if (rev !== net.rev) { net.rev = rev; await pull(); }
+    else if (net.state === 'error' && !outbox.length) { net.state = 'ok'; net.msg = 'Synced'; netPaint(); }
+  } catch (e) {
+    if (!outbox.length) { net.state = 'error'; net.msg = 'Cannot reach the database'; netPaint(); }
+  }
+}
+
+function netPaint(){
+  const el = $('#netpill'); if (!el) return;
+  if (!online()) { el.className = 'netpill off'; el.textContent = '○ Local';
+    el.title = 'Not connected to a database — data stays on this device'; return; }
+  const s = net.state;
+  el.className = 'netpill ' + s;
+  el.textContent = s === 'error' ? '⚠ ' + (outbox.length || '') : s === 'busy' ? '◍' : cloud.pin ? '● Live' : '👁 View';
+  el.title = net.msg + (cloud.pin ? '' : ' · viewing only — tap to enter the scorer passcode');
+}
+
+/* The connection is per-device, which is miserable to retype on a phone. A
+   setup link carries the project URL and anon key in the fragment, so a scorer
+   or the projector just opens it. The fragment never reaches the server, and it
+   is stripped from the address bar once applied. The passcode is deliberately
+   left out unless you explicitly ask for a scorer link.                       */
+function encCfg(withPin){
+  const o = { u: cloud.url, k: cloud.key };
+  if (withPin && cloud.pin) o.p = cloud.pin;
+  return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/=+$/, '');
+}
+function applyHashCfg(){
+  const m = /[#&]s=([A-Za-z0-9+/=_-]+)/.exec(location.hash || '');
+  if (!m) return false;
+  try {
+    const o = JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+    if (!o.u || !o.k) return false;
+    cloud.url = String(o.u).replace(/\/+$/, ''); cloud.key = o.k;
+    if (o.p) cloud.pin = o.p;
+    saveCloud();
+    history.replaceState(null, '', location.pathname + location.search);
+    return true;
+  } catch (e) { return false; }
+}
+function copyText(t, msg){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(function(){ toast(msg); },
+                                         function(){ window.prompt('Copy this link:', t); });
+  } else window.prompt('Copy this link:', t);
+}
+
+function pinModal(msg){
+  openModal('Scorer passcode',
+    '<p class="muted" style="margin:0;font-size:13px">' +
+      (msg || 'Entering scores needs the passcode. Anyone can watch the standings without it.') + '</p>' +
+    '<label class="f"><span>Passcode</span><input id="pin" type="password" autocomplete="off" placeholder="••••••"></label>',
+    '<button class="btn gho" data-act="closemod">Cancel</button>' +
+    '<button class="btn pri" data-act="dopin">Unlock scoring</button>');
+}
+async function tryPin(){
+  const v = ($('#pin').value || '').trim();
+  if (!v) return;
+  try {
+    const r = await rpc('gauntlet_verify_pin', { p_pin: v });
+    const ok = await r.json();
+    if (ok === true) {
+      cloud.pin = v; saveCloud(); closeModal(); netPaint(); render();
+      toast('Scoring unlocked on this device'); flush();
+    } else toast('That passcode is not right');
+  } catch (e) { toast('Could not reach the database'); }
+}
+/* Guard every write path in one place, so a spectator tapping something just
+   gets the passcode prompt instead of a silent no-op. */
+function guard(){
+  if (canEdit()) return true;
+  pinModal('That needs the scorer passcode.');
+  return false;
+}
+
+/* One-time upload of whatever is already on this device. */
+async function uploadLocal(){
+  if (!cloud.pin) { pinModal('Enter the passcode to upload this device’s data.'); return; }
+  toast('Uploading…');
+  syncConfig();
+  state.teams.forEach(syncTeam);
+  state.rounds.forEach(syncRound);
+  state.games.forEach(syncGame);
+  Object.keys(state.scores).forEach(k => {
+    const p = k.split('|'); syncScore(p[0], p[1], state.scores[k]);
+  });
+  await flush();
+  if (!outbox.length) { net.rev = ''; await tick(); toast('Uploaded to the database'); }
+}
+
+async function connTest(){
+  const box = $('#ctest'); if (!box) return;
+  const url = ($('#cu').value || '').trim(), key = ($('#ck').value || '').trim();
+  if (!url || !key) { box.innerHTML = '<div class="tline bad">✗ Fill in both the project URL and the anon key.</div>'; return; }
+  const prev = { url: cloud.url, key: cloud.key };
+  cloud.url = url; cloud.key = key;
+  const lines = [];
+  const put = (ok, t) => { lines.push('<div class="tline ' + (ok ? 'good' : 'bad') + '">' + (ok ? '✓' : '✗') + ' ' + t + '</div>');
+    box.innerHTML = lines.join(''); };
+  try {
+    const r = await api('gauntlet_config?select=id&id=eq.1');
+    if (r.status === 404) { put(false, 'Reached the project, but the tables are missing — run supabase-setup.sql first.'); throw 0; }
+    if (!r.ok) { put(false, 'Project answered ' + r.status + ' — check the anon key.'); throw 0; }
+    const rows = await r.json();
+    put(true, 'Project reachable and tables present.');
+    put(Array.isArray(rows) && rows.length > 0, Array.isArray(rows) && rows.length
+      ? 'Config row found.' : 'Config row missing — re-run the seed at the end of supabase-setup.sql.');
+    const rv = await rpc('gauntlet_revision');
+    put(rv.ok, rv.ok ? 'Sync functions installed.' : 'Functions missing — re-run supabase-setup.sql.');
+    const pin = ($('#cp').value || '').trim();
+    if (pin) {
+      const vr = await rpc('gauntlet_verify_pin', { p_pin: pin });
+      const ok = vr.ok && (await vr.json()) === true;
+      put(ok, ok ? 'Passcode accepted.' : 'Passcode rejected — check the value you set in the SQL.');
+    } else lines.push('<div class="tline">○ No passcode entered — you can add it later to score.</div>'), box.innerHTML = lines.join('');
+  } catch (e) {
+    if (!lines.length) put(false, 'Could not reach that URL at all. Check for typos.');
+  }
+  cloud.url = prev.url; cloud.key = prev.key;
+}
+
+/* ============================ lookups ============================ */
+const teamById  = id => state.teams.find(t => t.id === id);
+const roundById = id => state.rounds.find(r => r.id === id);
+const gameById  = id => state.games.find(g => g.id === id);
+const teamName  = id => (teamById(id) || {}).name || '—';
+const teamColor = id => (teamById(id) || {}).color || '#64748b';
+
+const bySort  = (a, b) => (a.sort || 0) - (b.sort || 0);
+const rounds  = () => state.rounds.slice().sort((a, b) => a.idx - b.idx);
+const gamesOf = rid => state.games.filter(g => g.roundId === rid).sort(bySort);
+const teams   = () => state.teams.slice().sort(bySort);
+const alive   = () => state.teams.filter(t => t.out == null).sort(bySort);
+
+const activeRound = () => rounds().find(r => r.status !== 'done') || null;
+const doneRounds  = () => rounds().filter(r => r.status === 'done');
+const lastDone    = () => doneRounds().slice(-1)[0] || null;
+
+/* A team is "in" a round if it had not yet been eliminated when that round was
+   played — which is what makes an old round's grid still show the right rows. */
+const inRound = (t, r) => t.out == null || t.out >= r.idx;
+
+/* ============================ scoring ============================ */
+/* Every number on this board is derived from the score cells. Nothing is
+   stored twice, so correcting a typo three rounds later instantly re-ranks
+   the whole event.                                                           */
+const cellKey = (gid, tid) => gid + '|' + tid;
+function cell(gid, tid){
+  const v = state.scores[cellKey(gid, tid)];
+  return v == null ? null : Number(v);
+}
+function setCell(gid, tid, v){
+  const k = cellKey(gid, tid);
+  if (v == null || v === '' || !isFinite(v)) { delete state.scores[k]; syncScore(gid, tid, null); }
+  else { state.scores[k] = Number(v); syncScore(gid, tid, Number(v)); }
+  save();
+}
+
+/* A team's score for one round is the sum of its game cells. `filled` is how
+   many of that round's games it actually has a number in — the difference is
+   what the "3 of 4 scored" hint on the lock button counts.                    */
+function roundScore(r, tid){
+  const gs = gamesOf(r.id);
+  let sum = 0, filled = 0;
+  gs.forEach(g => { const v = cell(g.id, tid); if (v != null) { sum += v; filled++; } });
+  return { v: sum, filled: filled, of: gs.length, any: filled > 0 };
+}
+function totalScore(tid, uptoIdx){
+  return rounds().reduce((s, r) =>
+    (uptoIdx == null || r.idx <= uptoIdx) ? s + roundScore(r, tid).v : s, 0);
+}
+
+/* Sorting a pool from best to worst under the current direction rule. */
+const better = (a, b) => state.rules.direction === 'low' ? a - b : b - a;
+const worst  = (a, b) => -better(a, b);
+
+/* ---- standings ----
+   Alive teams rank above eliminated ones. Among the eliminated, surviving
+   longer beats a big score in an early round — that is what an elimination
+   event actually rewards. Score breaks ties inside each group.               */
+function standings(){
+  return teams().map(t => ({
+    t: t, total: totalScore(t.id), out: t.out,
+    lastR: t.out == null ? 99999 : t.out
+  })).sort((a, b) => {
+    if ((a.out == null) !== (b.out == null)) return a.out == null ? -1 : 1;
+    if (a.out != null && a.out !== b.out) return b.out - a.out;
+    return better(a.total, b.total);
+  }).map((row, i) => (row.rank = i + 1, row));
+}
+
+/* Live order inside one round — used for the "elimination zone" highlight on
+   the active round's grid and for the preview in the lock dialog. */
+function roundOrder(r){
+  const pool = state.teams.filter(t => inRound(t, r)).sort(bySort);
+  const val  = t => state.rules.basis === 'total' ? totalScore(t.id, r.idx) : roundScore(r, t.id).v;
+  return pool.map(t => ({ t: t, v: val(t), rs: roundScore(r, t.id) }))
+             .sort((a, b) => better(a.v, b.v) || bySort(a.t, b.t));
+}
+
+/* Who the rules say goes out at the end of this round.
+   Never empties the board: with N teams left it can only take N-1.
+   `tie` is true when the cut line falls between two equal scores, which is the
+   one case a host must resolve themselves — a tie-break game, or a coin.      */
+function elimPreview(r){
+  const order = roundOrder(r);                     // best first
+  const rev   = order.slice().reverse();           // worst first
+  const n     = Math.max(0, Math.min(state.rules.perRound || 1, order.length - 1));
+  const picks = rev.slice(0, n);
+  const tie   = n > 0 && rev.length > n && rev[n].v === rev[n - 1].v;
+  const unscored = order.filter(o => !o.rs.any).length;
+  return { order: order, worstFirst: rev, picks: picks, n: n, tie: tie, unscored: unscored };
+}
+
+/* ============================ mutations ============================ */
+function addRound(name){
+  const idx = (rounds().slice(-1)[0] || { idx: 0 }).idx + 1;
+  const r = { id: uid(), idx: idx, name: name || ('Round ' + idx), note: '',
+              status: 'active', elim: [], lockedAt: 0 };
+  state.rounds.push(r); save(); syncRound(r);
+  openRounds[r.id] = true;
+  return r;
+}
+function addGame(roundId, name, icon){
+  const g = { id: uid(), roundId: roundId, name: name || 'Game',
+              icon: icon || '', sort: gamesOf(roundId).length };
+  state.games.push(g); save(); syncGame(g);
+  return g;
+}
+function delGame(id){
+  clearGameScores(id);
+  state.games = state.games.filter(g => g.id !== id);
+  save(); syncDelGame(id);
+}
+function clearGameScores(gid){
+  Object.keys(state.scores).forEach(k => { if (k.split('|')[0] === gid) delete state.scores[k]; });
+}
+function delRound(id){
+  gamesOf(id).forEach(g => clearGameScores(g.id));
+  state.games  = state.games.filter(g => g.roundId !== id);
+  state.rounds = state.rounds.filter(r => r.id !== id);
+  save(); syncDelRound(id);
+}
+function delTeam(id){
+  Object.keys(state.scores).forEach(k => { if (k.split('|')[1] === id) delete state.scores[k]; });
+  state.teams = state.teams.filter(t => t.id !== id);
+  state.rounds.forEach(r => {
+    if ((r.elim || []).indexOf(id) >= 0) { r.elim = r.elim.filter(x => x !== id); syncRound(r); }
+  });
+  save(); syncDelTeam(id);
+}
+
+/* Locking a round is the only thing here that is genuinely hard to undo by
+   hand, so it is the one thing that always asks first. */
+function lockRound(r, ids){
+  ids.forEach(id => { const t = teamById(id); if (t) { t.out = r.idx; syncTeam(t); } });
+  r.status = 'done'; r.elim = ids.slice(); r.lockedAt = Date.now();
+  syncRound(r); save();
+
+  const left = alive();
+  if (left.length > 1 && !rounds().some(x => x.status !== 'done')) addRound();
+  render();
+  if (left.length === 1) { confetti(); toast(left[0].name + ' wins the gauntlet!'); }
+  else if (ids.length) toast(ids.map(teamName).join(' & ') + ' eliminated');
+  else toast('Round locked — nobody went out');
+}
+function unlockRound(r){
+  (r.elim || []).forEach(id => { const t = teamById(id); if (t && t.out === r.idx) { t.out = null; syncTeam(t); } });
+  r.status = 'active'; r.elim = []; r.lockedAt = 0;
+  syncRound(r); save(); openRounds[r.id] = true; render();
+  toast('Round ' + r.idx + ' reopened');
+}
+
+/* ============================ render ============================ */
+function render(){
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+  $('#view').innerHTML =
+    view === 'rounds'   ? vRounds()   :
+    view === 'teams'    ? vTeams()    :
+    view === 'settings' ? vSettings() : vBoard();
+  netPaint();
+}
+
+const dot = t => '<i style="background:' + esc(t.color || '#64748b') + '"></i>';
+const nfmt = n => (Math.round(n * 100) / 100).toString();
+
+/* ---------- standings ---------- */
+function vBoard(){
+  if (!state.teams.length) {
+    return '<div class="card empty" style="margin-top:24px"><div class="big">🎪</div>' +
+      '<div><b>' + esc(state.event.name) + '</b> has no teams yet.</div>' +
+      '<div style="margin-top:12px"><button class="btn pri" data-act="go" data-view="teams">Add the teams</button></div></div>';
+  }
+
+  const rs = rounds(), done = doneRounds(), act = activeRound();
+  const st = standings(), left = alive();
+  const champ = left.length === 1 && done.length ? left[0] : null;
+  let h = '';
+
+  if (champ) {
+    h += '<div class="champ" style="--c:' + esc(champ.color) + '">' +
+      '<div class="lbl">Last team standing</div>' +
+      '<div class="nm">' + (champ.emoji ? esc(champ.emoji) + ' ' : '') + esc(champ.name) + '</div>' +
+      '<div class="sub">Survived all ' + done.length + ' round' + (done.length === 1 ? '' : 's') +
+        ' · ' + nfmt(totalScore(champ.id)) + ' points</div></div>';
+  }
+
+  h += '<div class="stats">' +
+    '<div class="stat"><b class="num">' + left.length + '</b><span>Still in</span></div>' +
+    '<div class="stat"><b class="num">' + (state.teams.length - left.length) + '</b><span>Eliminated</span></div>' +
+    '<div class="stat"><b class="num">' + done.length + '<span style="font-size:14px;color:var(--mut2)"> / ' + rs.length + '</span></b><span>Rounds done</span></div>' +
+    '<div class="stat"><b class="num">' + state.games.length + '</b><span>Games</span></div>' +
+    '</div>';
+
+  /* Who is currently in the drop zone, live, while the round is still running. */
+  if (act && !champ) {
+    const p = elimPreview(act);
+    const scored = p.order.filter(o => o.rs.any).length;
+    h += '<div class="card pad" style="margin-bottom:14px">' +
+      '<div class="row"><span class="chip live">Round ' + act.idx + ' in progress</span>' +
+      '<span class="muted" style="font-size:13px">' + esc(act.name) + ' · ' +
+        gamesOf(act.id).length + ' game' + (gamesOf(act.id).length === 1 ? '' : 's') + ' · ' +
+        scored + ' of ' + p.order.length + ' teams scored</span>' +
+      '<span class="sec-head sp" style="margin:0 0 0 auto"><button class="btn sm noprsnt" data-act="go" data-view="rounds">Enter scores</button></span></div>' +
+      (p.picks.length && scored
+        ? '<div class="row" style="margin-top:11px"><span class="zoneflag">On the chopping block</span>' +
+          p.picks.map(x => '<span class="outpill">' + (x.t.emoji ? esc(x.t.emoji) + ' ' : '') +
+            esc(x.t.name) + ' · <b class="num">' + nfmt(x.v) + '</b></span>').join('') +
+          (p.tie ? '<span class="chip">tied — host decides</span>' : '') + '</div>'
+        : '') +
+      '</div>';
+  }
+
+  /* podium */
+  const top = st.slice(0, 3);
+  const max = Math.max(1, ...st.map(s => Math.abs(s.total)));
+  h += '<div class="podium">' + top.map((s, i) => {
+    const t = s.t, rounds3 = rs.slice(-3);
+    return '<div class="pcard' + (i === 0 ? ' first' : '') + (t.out != null ? ' gone' : '') +
+        '" style="--c:' + esc(t.color) + '">' +
+      '<div class="rk">' + (i + 1) + '</div>' +
+      '<div class="nm">' + dot(t) + (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) + '</div>' +
+      '<div class="tot num">' + nfmt(s.total) + '<small>pts</small></div>' +
+      '<div class="bar"><i style="width:' + Math.max(3, Math.abs(s.total) / max * 100) + '%"></i></div>' +
+      (t.out != null
+        ? '<span class="chip out">Out in round ' + t.out + '</span>'
+        : '<div class="split">' + rounds3.map(r => {
+            const v = roundScore(r, t.id);
+            return '<div class="g"><b class="num">' + (v.any ? nfmt(v.v) : '–') + '</b><span>R' + r.idx + '</span></div>';
+          }).join('') + '</div>') +
+      '</div>';
+  }).join('') + '</div>';
+
+  /* survival grid */
+  h += '<div class="sec-head"><h2>Every round</h2>' +
+       '<span class="sub">' + (state.rules.basis === 'total' ? 'running total' : 'round score') +
+       ' decides · ' + (state.rules.direction === 'low' ? 'low score wins' : 'high score wins') + '</span></div>';
+  h += '<div class="card scroll"><table class="sgrid"><thead><tr>' +
+    '<th style="width:26px"></th><th>Team</th>' +
+    rs.map(r => '<th class="c" title="' + esc(r.name) + '">R' + r.idx +
+      (r.status === 'done' ? '' : ' <span style="color:var(--warn)">•</span>') + '</th>').join('') +
+    '<th class="r">Total</th><th class="r">Status</th></tr></thead><tbody>';
+
+  /* best/worst per round, so a column reads at a glance */
+  const stats = {};
+  rs.forEach(r => {
+    const vals = state.teams.filter(t => inRound(t, r)).map(t => roundScore(r, t.id))
+                            .filter(x => x.any).map(x => x.v);
+    stats[r.id] = vals.length ? { hi: Math.max.apply(null, vals), lo: Math.min.apply(null, vals) } : null;
+  });
+
+  h += st.map(s => {
+    const t = s.t;
+    return '<tr class="' + (t.out != null ? 'gone' : '') + '">' +
+      '<td class="rk num">' + s.rank + '</td>' +
+      '<td><span class="tm">' + dot(t) + (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) + '</span></td>' +
+      rs.map(r => {
+        if (!inRound(t, r)) return '<td class="c"><span class="cell dead">–</span></td>';
+        const v = roundScore(r, t.id), s2 = stats[r.id];
+        let cls = 'cell';
+        if (!v.any) cls += ' none';
+        else if (s2 && s2.hi !== s2.lo) {
+          const good = state.rules.direction === 'low' ? s2.lo : s2.hi;
+          const bad  = state.rules.direction === 'low' ? s2.hi : s2.lo;
+          if (v.v === good) cls += ' best'; else if (v.v === bad) cls += ' worst';
+        }
+        const knocked = (r.elim || []).indexOf(t.id) >= 0;
+        return '<td class="c"><span class="' + cls + '">' + (v.any ? nfmt(v.v) : '·') + '</span>' +
+               (knocked ? ' <span title="eliminated here">💀</span>' : '') + '</td>';
+      }).join('') +
+      '<td class="r tot num">' + nfmt(s.total) + '</td>' +
+      '<td class="r">' + (t.out == null
+        ? '<span class="chip done">In</span>'
+        : '<span class="chip out">R' + t.out + '</span>') + '</td></tr>';
+  }).join('');
+
+  h += '</tbody></table></div>';
+  return h;
+}
+
+/* ---------- rounds ---------- */
+function vRounds(){
+  const rs = rounds();
+  let h = '<div class="sec-head"><h2>Rounds</h2><span class="sub">' +
+    (rs.length ? rs.length + ' round' + (rs.length === 1 ? '' : 's') + ' · ' + alive().length + ' teams still in'
+               : 'one game or many — a team’s round score is the sum of its games') +
+    '</span><span class="sp"><button class="btn pri" data-act="addround">+ Round</button></span></div>';
+
+  if (!state.teams.length)
+    return h + '<div class="card empty"><div class="big">👥</div><div>Add teams before you can score a round.</div>' +
+      '<div style="margin-top:12px"><button class="btn" data-act="go" data-view="teams">Go to teams</button></div></div>';
+  if (!rs.length)
+    return h + '<div class="card empty"><div class="big">🎯</div><div>No rounds yet.</div>' +
+      '<div style="margin-top:12px"><button class="btn pri" data-act="addround">Start round 1</button></div></div>';
+
+  return h + rs.map(roundCard).join('');
+}
+
+function roundCard(r){
+  const gs   = gamesOf(r.id);
+  const act  = r.status !== 'done';
+  const pool = state.teams.filter(t => inRound(t, r)).sort(bySort);
+  const open = openRounds[r.id] !== undefined ? openRounds[r.id] : act;
+  const p    = elimPreview(r);
+  const zone = {};
+  if (act) p.picks.forEach(x => { if (x.rs.any) zone[x.t.id] = true; });
+
+  let h = '<div class="rcard' + (act ? ' act' : '') + '" data-round="' + r.id + '">' +
+    '<div class="rhead">' +
+      '<button class="rtoggle" data-act="togr" data-id="' + r.id + '">' +
+        '<span class="ix num">' + r.idx + '</span>' +
+        '<span class="mid"><span class="nm">' + esc(r.name) +
+          (act ? '<span class="chip live">open</span>' : '<span class="chip done">locked</span>') +
+          '</span><span class="meta">' + gs.length + ' game' + (gs.length === 1 ? '' : 's') +
+          ' · ' + pool.length + ' teams' +
+          (r.elim && r.elim.length ? ' · ' + r.elim.map(teamName).join(', ') + ' knocked out' : '') +
+          (r.note ? ' · ' + esc(r.note) : '') + '</span></span>' +
+      '</button>' +
+      '<button class="btn sm gho noprsnt" data-act="editround" data-id="' + r.id + '">Edit</button>' +
+      '<button class="iconbtn noprsnt" data-act="togr" data-id="' + r.id + '" title="Expand">' + (open ? '▴' : '▾') + '</button>' +
+    '</div>';
+
+  if (!open) return h + '</div>';
+  h += '<div class="rbody">';
+
+  if (!gs.length) {
+    h += '<div class="empty" style="padding:22px"><div>No games in this round yet.</div>' +
+      '<div style="margin-top:10px"><button class="btn pri" data-act="addgame" data-id="' + r.id + '">+ Add a game</button></div></div>';
+  } else {
+    h += '<div class="gwrap"><table class="gtab"><thead><tr>' +
+      '<th class="tm">Team</th>' +
+      gs.map(g => '<th class="gh"><button data-act="scoregame" data-id="' + g.id + '" title="Score this game on its own screen">' +
+        (g.icon ? esc(g.icon) + ' ' : '') + esc(g.name) + '</button></th>').join('') +
+      '<th class="r">Round</th></tr></thead><tbody>';
+
+    h += pool.map(t => {
+      const rsx = roundScore(r, t.id);
+      return '<tr class="' + (zone[t.id] ? 'zone' : '') + '" data-team="' + t.id + '">' +
+        '<td class="tm"><span class="tm" style="display:flex;align-items:center;gap:8px">' + dot(t) +
+          (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) + '</span></td>' +
+        gs.map(g => {
+          const v = cell(g.id, t.id);
+          return '<td class="c"><input class="sc num" type="number" step="any" inputmode="decimal" ' +
+            'data-g="' + g.id + '" data-t="' + t.id + '" ' + (act && canEdit() ? '' : 'disabled ') +
+            'value="' + (v == null ? '' : v) + '" placeholder="–" aria-label="' +
+            esc(t.name + ' — ' + g.name) + '"></td>';
+        }).join('') +
+        '<td class="rt num" data-rt="' + t.id + '">' + (rsx.any ? nfmt(rsx.v) : '–') + '</td></tr>';
+    }).join('');
+
+    h += '</tbody></table></div>';
+
+    h += '<div class="row" style="margin-top:12px">' +
+      '<button class="btn sm gho noprsnt" data-act="addgame" data-id="' + r.id + '">+ Game</button>' +
+      gs.map(g => '<button class="btn sm gho noprsnt" data-act="editgame" data-id="' + g.id + '">' +
+        (g.icon ? esc(g.icon) + ' ' : '') + esc(g.name) + ' ⚙</button>').join('') +
+      '</div>';
+  }
+
+  /* lock / unlock */
+  if (act) {
+    const missing = p.order.filter(o => o.rs.filled < o.rs.of).length;
+    h += '<div class="row noprsnt" style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">' +
+      '<span class="muted" style="font-size:13px">' +
+        (p.n === 0 ? 'Nobody can be eliminated — one team left.'
+                   : p.n + ' team' + (p.n === 1 ? '' : 's') + ' go out at the end of this round') +
+        (missing ? ' · <span style="color:var(--warn)">' + missing + ' team' + (missing === 1 ? ' has' : 's have') + ' blank scores</span>' : '') +
+      '</span>' +
+      '<span style="margin-left:auto;display:flex;gap:8px">' +
+      (gs.length ? '<button class="btn pri" data-act="lock" data-id="' + r.id + '">Lock round & eliminate</button>' : '') +
+      '</span></div>';
+  } else {
+    h += '<div class="row noprsnt" style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">' +
+      '<div class="outlist" style="margin:0">' +
+        (r.elim && r.elim.length
+          ? r.elim.map(id => { const t = teamById(id); return '<span class="outpill">💀 ' +
+              (t && t.emoji ? esc(t.emoji) + ' ' : '') + esc(teamName(id)) + '</span>'; }).join('')
+          : '<span class="muted" style="font-size:13px">Nobody was eliminated in this round.</span>') +
+      '</div>' +
+      '<span style="margin-left:auto"><button class="btn sm" data-act="unlock" data-id="' + r.id + '">Reopen</button></span></div>';
+  }
+
+  return h + '</div></div>';
+}
+
+/* Typing in a cell must not re-render the table — that would steal focus
+   mid-keystroke — so the derived numbers on that row are patched in place. */
+function repaintRound(rid){
+  const r = roundById(rid); if (!r) return;
+  const box = document.querySelector('[data-round="' + rid + '"]'); if (!box) return;
+  const p = elimPreview(r), zone = {};
+  if (r.status !== 'done') p.picks.forEach(x => { if (x.rs.any) zone[x.t.id] = true; });
+  box.querySelectorAll('tbody tr').forEach(tr => {
+    const tid = tr.dataset.team; if (!tid) return;
+    const v = roundScore(r, tid);
+    const cellEl = tr.querySelector('[data-rt]');
+    if (cellEl) cellEl.textContent = v.any ? nfmt(v.v) : '–';
+    tr.classList.toggle('zone', !!zone[tid]);
+  });
+}
+
+/* ---------- the lock dialog ----------
+   The one irreversible-feeling moment in the app, so it shows its work: the
+   full round order, who the rule picks, and a checkbox on every team in case
+   the host wants to overrule it (a tie, a disqualification, a judged game). */
+function lockModal(rid){
+  const r = roundById(rid); if (!r) return;
+  const p = elimPreview(r);
+  const picked = {}; p.picks.forEach(x => picked[x.t.id] = true);
+
+  const body =
+    (p.unscored ? '<div class="warnbox">' + p.unscored + ' team' + (p.unscored === 1 ? ' has' : 's have') +
+      ' no score in this round at all. Locking now counts them as zero.</div>' : '') +
+    (p.tie ? '<div class="warnbox">The cut falls on a tie. Pick who goes out, or reopen the round and play a tie-breaker.</div>' : '') +
+    '<div><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.09em;font-weight:600;margin-bottom:8px">' +
+      (state.rules.basis === 'total' ? 'Running total' : 'Round score') + ' — worst first</div>' +
+    p.worstFirst.map(x =>
+      '<label class="pick' + (picked[x.t.id] ? ' on' : '') + '">' +
+        '<input type="checkbox" data-elim="' + x.t.id + '"' + (picked[x.t.id] ? ' checked' : '') + '>' +
+        '<span class="nm">' + dot(x.t) + (x.t.emoji ? esc(x.t.emoji) + ' ' : '') + esc(x.t.name) +
+          (x.rs.any ? '' : ' <span class="muted" style="font-weight:500">· not scored</span>') + '</span>' +
+        '<span class="v num">' + nfmt(x.v) + '</span></label>').join('') +
+    '</div>';
+
+  openModal('Lock ' + esc(r.name), body,
+    '<button class="btn gho" data-act="closemod">Cancel</button>' +
+    '<button class="btn pri" data-act="dolock" data-id="' + r.id + '">Confirm & lock</button>');
+}
+
+/* ---------- teams ---------- */
+function vTeams(){
+  const ts = teams();
+  let h = '<div class="sec-head"><h2>Teams</h2><span class="sub">' +
+    ts.length + ' registered · ' + alive().length + ' still in</span>' +
+    '<span class="sp"><button class="btn gho" data-act="bulkteams">Paste a list</button>' +
+    '<button class="btn pri" data-act="addteam">+ Team</button></span></div>';
+
+  if (!ts.length)
+    return h + '<div class="card empty"><div class="big">👥</div><div>No teams yet.</div>' +
+      '<div style="margin-top:12px"><button class="btn pri" data-act="bulkteams">Paste your team list</button></div></div>';
+
+  h += '<div class="tgrid">' + ts.map(t =>
+    '<div class="tcard' + (t.out != null ? ' gone' : '') + '">' +
+      '<div class="av" style="border-color:' + esc(t.color) + '">' + (t.emoji || '🏳️') + '</div>' +
+      '<div class="mid"><div class="nm">' + esc(t.name) + '</div>' +
+        '<div class="meta">' + (t.out != null ? '💀 out in round ' + t.out
+          : (t.members ? esc(t.members) : nfmt(totalScore(t.id)) + ' pts')) + '</div></div>' +
+      '<button class="btn sm gho noprsnt" data-act="editteam" data-id="' + t.id + '">Edit</button>' +
+      '<button class="x noprsnt" data-act="delteam" data-id="' + t.id + '" title="Remove team">✕</button>' +
+    '</div>').join('') + '</div>';
+
+  const out = ts.filter(t => t.out != null);
+  if (out.length) h += '<div class="sec-head"><h2>Knocked out</h2><span class="sub">in order of exit</span></div>' +
+    '<div class="outlist">' + out.slice().sort((a, b) => a.out - b.out).map(t =>
+      '<span class="outpill">R' + t.out + ' · ' + esc(t.name) + '</span>').join('') + '</div>';
+  return h;
+}
+
+/* ---------- settings ---------- */
+function vSettings(){
+  const r = state.rules;
+  const seg = (act, val, label, cur) =>
+    '<button class="' + (cur === val ? 'on' : '') + '" data-act="' + act + '" data-v="' + val + '">' + label + '</button>';
+
+  let h = '<div class="sec-head"><h2>Event</h2></div><div class="card pad grid">' +
+    '<label class="f"><span>Event name</span><input id="evname" value="' + esc(state.event.name) + '"></label>' +
+    '<label class="f"><span>Tagline</span><input id="evtag" value="' + esc(state.event.tagline || '') + '"></label>' +
+    '<div class="row"><button class="btn" data-act="saveevent">Save</button></div></div>';
+
+  h += '<div class="sec-head"><h2>Elimination rules</h2>' +
+    '<span class="sub">changing these re-ranks everything instantly</span></div>' +
+    '<div class="card pad grid">' +
+    '<label class="f"><span>Who goes out</span><div class="seg">' +
+      seg('basis', 'round', 'Lowest that round', r.basis) +
+      seg('basis', 'total', 'Lowest running total', r.basis) + '</div></label>' +
+    '<label class="f"><span>Scoring direction</span><div class="seg">' +
+      seg('dir', 'high', 'High score wins', r.direction) +
+      seg('dir', 'low',  'Low score wins',  r.direction) + '</div></label>' +
+    '<label class="f"><span>Eliminated per round</span>' +
+      '<input id="perround" type="number" min="0" max="5" step="1" value="' + (r.perRound || 1) + '"></label>' +
+    '<div class="row"><button class="btn" data-act="saverules">Save rules</button>' +
+      '<span class="muted" style="font-size:12.5px">The app never eliminates the last team standing, whatever this says.</span></div>' +
+    '</div>';
+
+  /* shared database */
+  h += '<div class="sec-head"><h2>Shared database</h2><span class="sub">' +
+    (online() ? (cloud.pin ? 'connected · scoring unlocked here' : 'connected · view only on this device')
+              : 'optional — everything works offline without it') + '</span></div>';
+  h += '<div class="card pad cloudbox">';
+  if (!online()) {
+    h += '<p class="muted" style="margin:0;font-size:13.5px">Connect a free Supabase project and every phone, laptop and the projector all see one live board. ' +
+      'Run <b>supabase-setup.sql</b> in the Supabase SQL editor first.</p>' +
+      '<label class="f"><span>Project URL</span><input id="cu" placeholder="https://xxxx.supabase.co"></label>' +
+      '<label class="f"><span>Anon public key</span><input id="ck" placeholder="eyJhbGci…"></label>' +
+      '<label class="f"><span>Scorer passcode (optional)</span><input id="cp" type="password" placeholder="only needed to enter scores"></label>' +
+      '<div id="ctest"></div>' +
+      '<div class="row"><button class="btn" data-act="ctest">Test connection</button>' +
+      '<button class="btn pri" data-act="connect">Connect</button></div>';
+  } else {
+    h += '<div class="row"><span class="chip">' + esc(String(cloud.url).replace(/^https?:\/\//, '')) + '</span>' +
+      (cloud.pin ? '<span class="chip done">scoring unlocked</span>' : '<span class="chip">view only</span>') + '</div>' +
+      '<div class="row">' +
+      (cloud.pin ? '' : '<button class="btn pri" data-act="unlock-pin">Enter passcode</button>') +
+      '<button class="btn" data-act="viewlink">Copy watch link</button>' +
+      (cloud.pin ? '<button class="btn" data-act="scorerlink">Copy scorer link</button>' : '') +
+      '<button class="btn" data-act="upload">Upload this device’s data</button>' +
+      '<button class="btn gho" data-act="disconnect">Disconnect</button></div>' +
+      '<p class="muted" style="margin:0;font-size:12.5px">The watch link carries the project URL and key only — anyone opening it can see the board but not touch it. The scorer link also carries the passcode, so send it only to the people running the games.</p>';
+  }
+  h += '</div>';
+
+  h += '<div class="sec-head"><h2>Data</h2></div><div class="card pad"><div class="row">' +
+    '<button class="btn" data-act="export">Export backup</button>' +
+    '<button class="btn" data-act="import">Import backup</button>' +
+    '<button class="btn dgr" data-act="restart">Clear all scores</button>' +
+    '<button class="btn dgr" data-act="wipe">Delete everything</button></div>' +
+    '<p class="muted" style="margin:10px 0 0;font-size:12.5px">“Clear all scores” keeps the teams, rounds and games, wipes every score and brings every team back in — the button for a second run of the same event.</p></div>';
+  return h;
+}
+
+/* ============================ modals ============================ */
+function closeModal(){ $('#modal').classList.add('hide'); $('#modal').innerHTML = ''; }
+function openModal(title, body, footer){
+  $('#modal').innerHTML = '<div class="sheet"><div class="hd"><h3>' + title + '</h3>' +
+    '<button class="iconbtn" style="margin-left:auto" data-act="closemod">✕</button></div>' +
+    '<div class="bd">' + body + '</div>' +
+    '<div class="ft">' + (footer || '<button class="btn" data-act="closemod">Close</button>') + '</div></div>';
+  $('#modal').classList.remove('hide');
+  const f = $('#modal').querySelector('input,select,textarea');
+  if (f) setTimeout(() => f.focus(), 30);
+}
+
+function teamModal(id){
+  const t = id ? teamById(id) : null;
+  const color = t ? t.color : PALETTE[state.teams.length % PALETTE.length];
+  openModal(t ? 'Edit team' : 'New team',
+    '<label class="f"><span>Team name</span><input id="tn" value="' + esc(t ? t.name : '') + '" placeholder="The Quiz Wizards"></label>' +
+    '<div class="two">' +
+      '<label class="f"><span>Badge</span><input id="te" value="' + esc(t ? t.emoji : '') + '" placeholder="🐯" maxlength="4"></label>' +
+      '<label class="f"><span>Members</span><input id="tm" value="' + esc(t ? t.members : '') + '" placeholder="optional"></label>' +
+    '</div>' +
+    '<label class="f"><span>Colour</span><div class="swatch" id="tc">' +
+      PALETTE.map(c => '<button data-c="' + c + '" class="' + (c === color ? 'on' : '') +
+        '" style="background:' + c + '"></button>').join('') + '</div></label>' +
+    (t && t.out != null
+      ? '<div class="warnbox">Eliminated in round ' + t.out + '. Bringing them back also reopens nothing else — the round stays locked.</div>' +
+        '<div class="row"><button class="btn" data-act="revive" data-id="' + t.id + '">Bring back in</button></div>'
+      : ''),
+    '<button class="btn gho" data-act="closemod">Cancel</button>' +
+    '<button class="btn pri" data-act="saveteam" data-id="' + (t ? t.id : '') + '">' + (t ? 'Save' : 'Add team') + '</button>');
+  $('#tc').addEventListener('click', e => {
+    const b = e.target.closest('[data-c]'); if (!b) return;
+    $('#tc').querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+  });
+}
+
+function bulkModal(){
+  openModal('Paste a team list',
+    '<p class="muted" style="margin:0;font-size:13px">One team per line. Anything already registered is left alone.</p>' +
+    '<label class="f"><span>Teams</span><textarea id="bulk" rows="9" placeholder="The Quiz Wizards&#10;Team Chaos&#10;Desk 4 United"></textarea></label>',
+    '<button class="btn gho" data-act="closemod">Cancel</button>' +
+    '<button class="btn pri" data-act="dobulk">Add teams</button>');
+}
+
+function roundModal(id){
+  const r = id ? roundById(id) : null;
+  openModal(r ? 'Edit round' : 'New round',
+    '<label class="f"><span>Round name</span><input id="rn" value="' + esc(r ? r.name : '') + '" placeholder="Round ' +
+      ((rounds().slice(-1)[0] || { idx: 0 }).idx + 1) + '"></label>' +
+    '<label class="f"><span>Note</span><input id="rnote" value="' + esc(r ? r.note : '') + '" placeholder="optional — venue, time, theme"></label>' +
+    (r ? '<div class="row"><button class="btn dgr" data-act="delround" data-id="' + r.id + '">Delete this round</button></div>' : ''),
+    '<button class="btn gho" data-act="closemod">Cancel</button>' +
+    '<button class="btn pri" data-act="saveround" data-id="' + (r ? r.id : '') + '">' + (r ? 'Save' : 'Add round') + '</button>');
+}
+
+function gameModal(roundId, gameId){
+  const g = gameId ? gameById(gameId) : null;
+  openModal(g ? 'Edit game' : 'New game',
+    '<div class="two">' +
+      '<label class="f"><span>Icon</span><input id="gi" value="' + esc(g ? g.icon : '') + '" placeholder="🎯" maxlength="4"></label>' +
+      '<label class="f"><span>Game name</span><input id="gn" value="' + esc(g ? g.name : '') + '" placeholder="Tug of war"></label>' +
+    '</div>' +
+    '<p class="muted" style="margin:0;font-size:12.5px">A round can hold several games. Each team’s round score is the sum of its games.</p>' +
+    (g ? '<div class="row"><button class="btn dgr" data-act="delgame" data-id="' + g.id + '">Delete this game</button></div>' : ''),
+    '<button class="btn gho" data-act="closemod">Cancel</button>' +
+    '<button class="btn pri" data-act="savegame" data-rid="' + (roundId || (g ? g.roundId : '')) +
+      '" data-id="' + (g ? g.id : '') + '">' + (g ? 'Save' : 'Add game') + '</button>');
+}
+
+/* ============================ one-game scorer ============================
+   The grid is right on a laptop. On a phone, walking one game down the list of
+   teams with a big +/- under your thumb is far better, so a tap on any game
+   header opens exactly that.                                                  */
+let curGame = null;
+
+function openScorer(gid){
+  const g = gameById(gid); if (!g) return;
+  const r = roundById(g.roundId); if (!r) return;
+  if (r.status === 'done') { toast('Reopen round ' + r.idx + ' to change its scores'); return; }
+  if (!guard()) return;
+  curGame = gid;
+  $('#scorer').classList.remove('hide');
+  paintScorer();
+}
+function closeScorer(){ curGame = null; $('#scorer').classList.add('hide'); $('#scorer').innerHTML = ''; render(); }
+
+function paintScorer(){
+  const g = gameById(curGame); if (!g) { closeScorer(); return; }
+  const r = roundById(g.roundId);
+  const gs = gamesOf(r.id), pos = gs.findIndex(x => x.id === g.id);
+  const pool = state.teams.filter(t => inRound(t, r)).sort(bySort);
+  const p = elimPreview(r), zone = {};
+  p.picks.forEach(x => { if (x.rs.any) zone[x.t.id] = true; });
+
+  $('#scorer').innerHTML =
+    '<div class="ovtop"><button class="iconbtn" data-act="closescorer">✕</button>' +
+      '<div><div class="t">' + (g.icon ? esc(g.icon) + ' ' : '') + esc(g.name) + '</div>' +
+      '<div class="s">' + esc(r.name) + ' · game ' + (pos + 1) + ' of ' + gs.length + '</div></div>' +
+      '<span style="margin-left:auto" class="chip">' + pool.length + ' teams</span></div>' +
+    '<div class="ovbody">' + pool.map(t => {
+      const v = cell(g.id, t.id);
+      return '<div class="srow' + (zone[t.id] ? ' zone' : '') + '">' +
+        '<span class="nm">' + dot(t) + (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) + '</span>' +
+        '<button class="stp" data-act="step" data-g="' + g.id + '" data-t="' + t.id + '" data-d="-1">−</button>' +
+        '<input class="num" type="number" step="any" inputmode="decimal" data-g="' + g.id + '" data-t="' + t.id +
+          '" value="' + (v == null ? '' : v) + '" placeholder="–">' +
+        '<button class="stp" data-act="step" data-g="' + g.id + '" data-t="' + t.id + '" data-d="1">+</button>' +
+      '</div>';
+    }).join('') + '</div>' +
+    '<div class="ovbot">' +
+      (pos > 0 ? '<button class="btn" data-act="gonext" data-id="' + gs[pos - 1].id + '">← ' + esc(gs[pos - 1].name) + '</button>' : '') +
+      '<span style="margin-left:auto;display:flex;gap:8px">' +
+      (pos < gs.length - 1
+        ? '<button class="btn" data-act="gonext" data-id="' + gs[pos + 1].id + '">' + esc(gs[pos + 1].name) + ' →</button>'
+        : '<button class="btn pri" data-act="closescorer">Done</button>') +
+      '</span></div>';
+}
+
+/* ============================ confirm ============================ */
+let pendingConfirm = null;
+function confirmModal(title, msg, label, fn){
+  pendingConfirm = fn;
+  openModal(title, '<p style="margin:0;font-size:14px">' + msg + '</p>',
+    '<button class="btn gho" data-act="closemod">Cancel</button>' +
+    '<button class="btn dgr" data-act="doconfirm">' + label + '</button>');
+}
+
+/* ============================ actions ============================ */
+document.addEventListener('click', e => {
+  const nb = e.target.closest('nav button');
+  if (nb) { view = nb.dataset.view; render(); window.scrollTo(0, 0); return; }
+  if (e.target.id === 'netpill') {
+    if (!online()) { view = 'settings'; render(); }
+    else if (!cloud.pin) pinModal();
+    else { toast(net.msg); tick(); }
+    return;
+  }
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act, id = b.dataset.id;
+
+  switch (a) {
+    case 'go': view = b.dataset.view; render(); window.scrollTo(0, 0); break;
+    case 'closemod': closeModal(); break;
+    case 'doconfirm': { const f = pendingConfirm; pendingConfirm = null; closeModal(); if (f) f(); break; }
+    case 'dopin': tryPin(); break;
+    case 'closescorer': closeScorer(); break;
+
+    /* ---- rounds ---- */
+    case 'togr': openRounds[id] = !(openRounds[id] !== undefined ? openRounds[id]
+                                     : (roundById(id) || {}).status !== 'done'); render(); break;
+    case 'addround': if (!guard()) break; addRound(); view = 'rounds'; render(); break;
+    case 'editround': roundModal(id); break;
+    case 'saveround': {
+      if (!guard()) break;
+      const nm = ($('#rn').value || '').trim(), note = ($('#rnote').value || '').trim();
+      if (id) { const r = roundById(id); if (r) { r.name = nm || r.name; r.note = note; syncRound(r); } }
+      else { const r = addRound(nm); r.note = note; syncRound(r); }
+      save(); closeModal(); render(); break;
+    }
+    case 'delround': {
+      const r = roundById(id); if (!r) break;
+      confirmModal('Delete ' + esc(r.name) + '?',
+        'Its games and every score in it go too. Teams eliminated in this round stay out until you bring them back from the Teams tab.',
+        'Delete round', () => { delRound(id); render(); toast('Round deleted'); });
+      break;
+    }
+
+    /* ---- games ---- */
+    case 'addgame':  if (!guard()) break; gameModal(id, null); break;
+    case 'editgame': gameModal(null, id); break;
+    case 'savegame': {
+      if (!guard()) break;
+      const nm = ($('#gn').value || '').trim() || 'Game', ic = ($('#gi').value || '').trim();
+      if (id) { const g = gameById(id); if (g) { g.name = nm; g.icon = ic; syncGame(g); } }
+      else addGame(b.dataset.rid, nm, ic);
+      save(); closeModal(); render(); break;
+    }
+    case 'delgame': {
+      const g = gameById(id); if (!g) break;
+      confirmModal('Delete ' + esc(g.name) + '?', 'Every score entered for this game is removed.',
+        'Delete game', () => { delGame(id); render(); toast('Game deleted'); });
+      break;
+    }
+    case 'scoregame': openScorer(id); break;
+    case 'gonext': curGame = id; paintScorer(); break;
+    case 'step': {
+      const g = b.dataset.g, t = b.dataset.t, d = Number(b.dataset.d);
+      const now = cell(g, t) || 0;
+      setCell(g, t, now + d);
+      const inp = $('#scorer').querySelector('input[data-g="' + g + '"][data-t="' + t + '"]');
+      if (inp) inp.value = now + d;
+      paintScorer();
+      break;
+    }
+
+    /* ---- lock / unlock ---- */
+    case 'lock': {
+      if (!guard()) break;
+      const r = roundById(id); if (!r) break;
+      if (state.rules.confirm === false) lockRound(r, elimPreview(r).picks.map(x => x.t.id));
+      else lockModal(id);
+      break;
+    }
+    case 'dolock': {
+      const r = roundById(id); if (!r) break;
+      const ids = Array.prototype.slice.call($('#modal').querySelectorAll('[data-elim]'))
+        .filter(c => c.checked).map(c => c.dataset.elim);
+      if (ids.length >= state.teams.filter(t => inRound(t, r)).length) { toast('You cannot eliminate every team'); break; }
+      closeModal(); lockRound(r, ids); break;
+    }
+    case 'unlock': {
+      if (!guard()) break;
+      const r = roundById(id); if (!r) break;
+      confirmModal('Reopen ' + esc(r.name) + '?',
+        (r.elim && r.elim.length
+          ? esc(r.elim.map(teamName).join(' and ')) + ' come back in and the scores become editable again.'
+          : 'The scores become editable again.'),
+        'Reopen round', () => unlockRound(r));
+      break;
+    }
+
+    /* ---- teams ---- */
+    case 'addteam': if (!guard()) break; teamModal(null); break;
+    case 'editteam': teamModal(id); break;
+    case 'bulkteams': if (!guard()) break; bulkModal(); break;
+    case 'dobulk': {
+      const lines = ($('#bulk').value || '').split('\n').map(s => s.trim()).filter(Boolean);
+      let n = 0;
+      lines.forEach(nm => {
+        if (state.teams.some(t => t.name.toLowerCase() === nm.toLowerCase())) return;
+        const t = { id: uid(), name: nm, color: PALETTE[state.teams.length % PALETTE.length],
+                    emoji: '', members: '', out: null, sort: state.teams.length };
+        state.teams.push(t); syncTeam(t); n++;
+      });
+      save(); closeModal(); render(); toast(n ? n + ' team' + (n === 1 ? '' : 's') + ' added' : 'Nothing new to add');
+      break;
+    }
+    case 'saveteam': {
+      const nm = ($('#tn').value || '').trim();
+      if (!nm) { toast('Give the team a name'); break; }
+      const col = ($('#tc').querySelector('button.on') || {}).dataset;
+      const emo = ($('#te').value || '').trim(), mem = ($('#tm').value || '').trim();
+      if (id) {
+        const t = teamById(id);
+        if (t) { t.name = nm; t.emoji = emo; t.members = mem; if (col) t.color = col.c; syncTeam(t); }
+      } else {
+        const t = { id: uid(), name: nm, emoji: emo, members: mem,
+                    color: col ? col.c : PALETTE[state.teams.length % PALETTE.length],
+                    out: null, sort: state.teams.length };
+        state.teams.push(t); syncTeam(t);
+      }
+      save(); closeModal(); render(); break;
+    }
+    case 'revive': {
+      const t = teamById(id); if (!t) break;
+      const r = rounds().find(x => (x.elim || []).indexOf(id) >= 0);
+      if (r) { r.elim = r.elim.filter(x => x !== id); syncRound(r); }
+      t.out = null; syncTeam(t); save(); closeModal(); render();
+      toast(t.name + ' is back in');
+      break;
+    }
+    case 'delteam': {
+      const t = teamById(id); if (!t) break;
+      confirmModal('Remove ' + esc(t.name) + '?', 'Every score they have is deleted with them.',
+        'Remove team', () => { delTeam(id); render(); toast('Team removed'); });
+      break;
+    }
+
+    /* ---- settings ---- */
+    case 'saveevent': {
+      if (!guard()) break;
+      state.event.name = ($('#evname').value || '').trim() || 'Fun Games';
+      state.event.tagline = ($('#evtag').value || '').trim();
+      save(); syncConfig(); render(); toast('Saved');
+      break;
+    }
+    case 'basis': if (!guard()) break; state.rules.basis = b.dataset.v; save(); syncConfig(); render(); break;
+    case 'dir':   if (!guard()) break; state.rules.direction = b.dataset.v; save(); syncConfig(); render(); break;
+    case 'saverules': {
+      if (!guard()) break;
+      const n = parseInt($('#perround').value, 10);
+      state.rules.perRound = isFinite(n) ? Math.max(0, Math.min(5, n)) : 1;
+      save(); syncConfig(); render(); toast('Rules saved');
+      break;
+    }
+
+    /* ---- cloud ---- */
+    case 'ctest': connTest(); break;
+    case 'connect': {
+      const url = ($('#cu').value || '').trim(), key = ($('#ck').value || '').trim();
+      if (!url || !key) { toast('Project URL and anon key are both needed'); break; }
+      cloud.url = url.replace(/\/+$/, ''); cloud.key = key;
+      const pin = ($('#cp').value || '').trim(); if (pin) cloud.pin = pin;
+      saveCloud(); net.rev = ''; render(); netPaint(); tick();
+      toast('Connected'); break;
+    }
+    case 'disconnect':
+      confirmModal('Disconnect this device?', 'The board stays in the database. This device falls back to its own local copy.',
+        'Disconnect', () => { cloud = {}; saveCloud(); outbox = []; saveOutbox();
+          net = { state: 'off', msg: 'Local only', rev: '' }; render(); netPaint(); toast('Disconnected'); });
+      break;
+    case 'unlock-pin': pinModal(); break;
+    case 'upload': uploadLocal(); break;
+    case 'viewlink':   copyText(location.origin + location.pathname + '#s=' + encCfg(false), 'Watch link copied'); break;
+    case 'scorerlink': copyText(location.origin + location.pathname + '#s=' + encCfg(true),  'Scorer link copied — it carries the passcode'); break;
+
+    /* ---- data ---- */
+    case 'export': {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a2 = document.createElement('a');
+      a2.href = URL.createObjectURL(blob);
+      a2.download = 'gauntlet-' + new Date().toISOString().slice(0, 10) + '.json';
+      a2.click(); setTimeout(() => URL.revokeObjectURL(a2.href), 1000);
+      toast('Backup downloaded'); break;
+    }
+    case 'import': {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'application/json';
+      inp.onchange = () => {
+        const f = inp.files[0]; if (!f) return;
+        const rd = new FileReader();
+        rd.onload = () => {
+          try { state = migrate(JSON.parse(rd.result)); save(); render(); toast('Backup restored'); }
+          catch (err) { toast('That file could not be read'); }
+        };
+        rd.readAsText(f);
+      };
+      inp.click(); break;
+    }
+    case 'restart':
+      if (!guard()) break;
+      confirmModal('Clear all scores?', 'Teams, rounds and games stay. Every score is wiped and every team comes back in.',
+        'Clear scores', () => {
+          state.scores = {};
+          state.teams.forEach(t => { t.out = null; });
+          state.rounds.forEach(r => { r.status = 'active'; r.elim = []; r.lockedAt = 0; });
+          save();
+          if (online() && cloud.pin) enqueue('gauntlet_restart', { p_pin: cloud.pin }, 'restart');
+          render(); toast('Scores cleared');
+        });
+      break;
+    case 'wipe':
+      if (!guard()) break;
+      confirmModal('Delete everything?', 'Teams, rounds, games and scores — all of it, on this device and in the database.',
+        'Delete everything', () => {
+          const wasOnline = online() && cloud.pin;
+          outbox = []; saveOutbox();
+          state = clone(DEFAULTS); save();
+          if (wasOnline) enqueue('gauntlet_reset', { p_pin: cloud.pin }, 'reset');
+          render(); toast('Everything deleted');
+        });
+      break;
+  }
+});
+
+/* score cells — patch derived numbers on input, full re-render on commit */
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (!el.dataset || !el.dataset.g || !el.dataset.t) return;
+  if (!guard()) { el.value = ''; return; }
+  const raw = el.value.trim();
+  setCell(el.dataset.g, el.dataset.t, raw === '' ? null : Number(raw));
+  const g = gameById(el.dataset.g);
+  if (g && !el.closest('#scorer')) repaintRound(g.roundId);
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset && el.dataset.elim) { el.closest('.pick').classList.toggle('on', el.checked); return; }
+  if (el.dataset && el.dataset.g && el.dataset.t && !el.closest('#scorer')) {
+    const g = gameById(el.dataset.g); if (g) repaintRound(g.roundId);
+  }
+});
+/* Enter moves down the column — the way you actually read scores off a sheet */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!$('#modal').classList.contains('hide')) { closeModal(); return; }
+    if (!$('#scorer').classList.contains('hide')) { closeScorer(); return; }
+  }
+  const el = e.target;
+  if (e.key !== 'Enter' || !el.dataset || !el.dataset.g) return;
+  const all = Array.prototype.slice.call(
+    (el.closest('#scorer') || document).querySelectorAll('input[data-g="' + el.dataset.g + '"]'));
+  const i = all.indexOf(el);
+  if (i >= 0 && i < all.length - 1) { e.preventDefault(); all[i + 1].focus(); all[i + 1].select(); }
+});
+
+/* present mode */
+$('#presentBtn').addEventListener('click', () => {
+  document.body.classList.toggle('present');
+  if (document.body.classList.contains('present')) {
+    view = 'board'; render();
+    if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+    toast('Present mode — press the button again to exit');
+  } else if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+});
+
+/* toast + confetti */
+function toast(msg){
+  const d = document.createElement('div');
+  d.className = 'tst'; d.textContent = msg;
+  $('#toast').appendChild(d);
+  setTimeout(() => { d.style.opacity = '0'; d.style.transition = 'opacity .3s'; setTimeout(() => d.remove(), 320); }, 2200);
+}
+function confetti(){
+  const cols = ['#f59e0b', '#fbbf24', '#22d3ee', '#a78bfa', '#34d399', '#fb7185'];
+  for (let i = 0; i < 90; i++) {
+    const d = document.createElement('div');
+    d.className = 'cf';
+    d.style.background = cols[i % cols.length];
+    d.style.left = (10 + Math.random() * 80) + 'vw';
+    d.style.top = '-20px';
+    d.style.opacity = '1';
+    document.body.appendChild(d);
+    const x = (Math.random() - .5) * 320, y = window.innerHeight + 60, r = Math.random() * 900;
+    d.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 },
+               { transform: 'translate(' + x + 'px,' + y + 'px) rotate(' + r + 'deg)', opacity: 0 }],
+      { duration: 1600 + Math.random() * 900, easing: 'cubic-bezier(.2,.6,.4,1)' }).onfinish = () => d.remove();
+  }
+}
+
+/* ============================ boot ============================ */
+const fromLink = applyHashCfg();
+render();
+netPaint();
+if (online()) { tick(); setInterval(tick, 4000); }
+if (fromLink) toast(cloud.pin ? 'Connected — scoring unlocked on this device'
+                              : 'Connected to the shared board');
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+window.addEventListener('online', tick);
+</script>
+</body>
+</html>
