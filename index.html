@@ -111,32 +111,64 @@ th.c,td.c{text-align:center}
   display:flex;align-items:center;justify-content:center;gap:12px}
 .champ .sub{color:var(--mut);font-size:13.5px}
 
-/* ---------- podium ---------- */
-.podium{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
-@media(max-width:760px){.podium{grid-template-columns:1fr}}
-.pcard{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--line);
-  background:var(--panel);padding:18px}
-.pcard::before{content:"";position:absolute;inset:0;opacity:.14;
-  background:radial-gradient(420px 180px at 15% 0%,var(--c),transparent 70%)}
-.pcard.first{border-color:var(--c)}
-.pcard.gone{opacity:.62}
-.pcard>*{position:relative}
-.pcard .rk{position:absolute;top:0;right:0;font-size:52px;font-weight:800;color:var(--c);
-  opacity:.16;line-height:1;letter-spacing:-.05em}
-.pcard .nm{font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px}
-.pcard .nm i{width:9px;height:9px;border-radius:50%;background:var(--c);font-style:normal;flex:none}
-.pcard .tot{font-size:44px;font-weight:800;letter-spacing:-.045em;line-height:1.05;margin-top:8px}
-.pcard .tot small{font-size:13px;font-weight:600;color:var(--mut2);letter-spacing:0;margin-left:6px}
-.bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:12px 0}
+/* ---------- 16:9 stage ----------
+   The dashboard is designed once, at 1600x900, and then scaled to whatever
+   screen it lands on — a projector, a TV in the corner, a laptop. Everything
+   fits the frame, so nothing scrolls and nothing is cut off. Narrow screens
+   drop the stage and stack the same panels normally, because a letterboxed
+   16:9 strip on a phone would be unreadable.                                 */
+.stagewrap{position:relative;width:100%}
+.stagewrap.on{overflow:hidden}
+.stagewrap.on .stage{position:absolute;top:0;left:0;width:1600px;height:900px;
+  transform-origin:top left;display:flex;flex-direction:column;gap:16px}
+.dashhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.dashhead .ev{min-width:0}
+.dashhead .ev b{display:block;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.15}
+.dashhead .ev span{font-size:13px;color:var(--mut2);font-weight:500}
+.dashhead .chips{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.dash{display:flex;gap:16px;align-items:stretch;min-height:0}
+.stagewrap.on .dash{flex:1}
+.dash .main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
+.dash .main .card{flex:1;min-height:0;display:flex;flex-direction:column}
+.dash .main .scroll{flex:1;min-height:0;overflow:auto}
+.dash .rail{width:360px;flex:none;display:flex;flex-direction:column;gap:12px;min-height:0}
+@media(max-width:900px){
+  .dash{flex-direction:column}
+  .dash .rail{width:auto}
+}
+
+/* ---------- leader rail ---------- */
+.lead{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--line);
+  background:var(--panel);padding:16px}
+.lead::before{content:"";position:absolute;inset:0;opacity:.15;
+  background:radial-gradient(420px 180px at 12% 0%,var(--c),transparent 70%)}
+.lead.first{border-color:var(--c)}
+.lead>*{position:relative}
+.lead .cap{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut2)}
+.lead .nm{font-size:22px;font-weight:800;letter-spacing:-.03em;display:flex;align-items:center;gap:9px;margin-top:4px}
+.lead .nm i{width:10px;height:10px;border-radius:50%;background:var(--c);font-style:normal;flex:none}
+.lead .tot{font-size:38px;font-weight:800;letter-spacing:-.045em;line-height:1.1;margin-top:2px}
+.lead .tot small{font-size:12.5px;font-weight:600;color:var(--mut2);letter-spacing:0;margin-left:6px}
+.bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:10px 0 0}
 .bar i{display:block;height:100%;border-radius:99px;background:var(--c);transition:width .6s cubic-bezier(.2,.8,.2,1)}
-.split{display:flex;gap:6px;flex-wrap:wrap}
-.split .g{flex:1;min-width:88px;background:var(--panel2);border:1px solid var(--line);
-  border-radius:10px;padding:8px 10px}
-.split .g b{display:block;font-size:17px;font-weight:700}
-.split .g span{font-size:10.5px;color:var(--mut2);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.chase{display:flex;flex-direction:column;gap:1px;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);background:var(--panel)}
+.crow{display:flex;align-items:center;gap:10px;padding:9px 13px;font-size:14px}
+.crow+.crow{border-top:1px solid rgba(36,49,71,.55)}
+.crow .p{width:18px;color:var(--mut2);font-weight:700;font-variant-numeric:tabular-nums}
+.crow .nm{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:8px}
+.crow .nm i{width:8px;height:8px;border-radius:50%;font-style:normal;flex:none}
+.crow .v{font-weight:800;font-variant-numeric:tabular-nums}
+.crow.gone{opacity:.55}
+.panel{border-radius:14px;border:1px solid var(--line);background:var(--panel);padding:13px 14px}
+.panel .cap{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mut2);margin-bottom:9px}
+.panel.warn{border-color:#7f2d3c;background:#1d1418}
 
 /* ---------- stat strip ---------- */
-.stats{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:14px}
+.stats{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.rail .stats{grid-template-columns:1fr 1fr}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .stat b{display:block;font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:1.15}
 .stat span{font-size:10.5px;color:var(--mut2);font-weight:600;text-transform:uppercase;letter-spacing:.09em}
@@ -271,9 +303,9 @@ th.c,td.c{text-align:center}
 
 /* ---------- present mode ---------- */
 body.present .top nav,body.present .sec-head .sp,body.present .noprsnt{display:none}
-body.present .pcard .tot{font-size:56px}
-body.present .pcard .nm{font-size:25px}
-body.present{font-size:17px}
+body.present .top,body.present .credit{display:none}
+body.present{padding-bottom:0}
+body.present .wrap{padding:0}
 </style>
 </head>
 <body>
@@ -801,13 +833,18 @@ function render(){
     view === 'teams'    ? vTeams()    :
     view === 'settings' ? vSettings() : vBoard();
   netPaint();
+  if (view === 'board') fitStage();
 }
 
 const dot = t => '<i style="background:' + esc(t.color || '#64748b') + '"></i>';
 const nfmt = n => (Math.round(n * 100) / 100).toString();
 const label = g => (g.icon ? esc(g.icon) + ' ' : '') + esc(g.name);
 
-/* ---------- standings ---------- */
+/* ---------- standings ----------
+   Laid out as a 16:9 dashboard: the survival grid takes the floor, and a rail
+   down the right carries the leader, the count, and whoever is about to go
+   out. It is designed at 1600x900 and scaled to fit, so the same screen works
+   on a projector and on a laptop.                                            */
 function vBoard(){
   if (!state.teams.length) {
     return '<div class="card empty" style="margin-top:24px"><div class="big">🎪</div>' +
@@ -818,66 +855,23 @@ function vBoard(){
   const gs = games(), done = doneGames(), act = activeGame();
   const st = standings(), left = alive();
   const champ = left.length === 1 && done.length ? left[0] : null;
-  let h = '';
 
-  if (champ) {
-    h += '<div class="champ" style="--c:' + esc(champ.color) + '">' +
-      '<div class="lbl">Last team standing</div>' +
-      '<div class="nm">' + (champ.emoji ? esc(champ.emoji) + ' ' : '') + esc(champ.name) + '</div>' +
-      '<div class="sub">Survived all ' + done.length + ' game' + (done.length === 1 ? '' : 's') +
-        ' · ' + nfmt(totalScore(champ.id)) + ' points</div></div>';
-  }
+  /* ---- header ---- */
+  let h = '<div class="stagewrap" id="stagewrap"><div class="stage" id="stage">' +
+    '<div class="dashhead"><div class="ev"><b>' + esc(state.event.name) + '</b>' +
+      (state.event.tagline ? '<span>' + esc(state.event.tagline) + '</span>' : '') + '</div>' +
+    '<div class="chips">' +
+      (champ ? '<span class="chip done">complete</span>'
+             : act ? '<span class="chip live">Game ' + act.idx + ' · ' + label(act) + '</span>'
+                   : '<span class="chip">no game open</span>') +
+      '<span class="chip">' + done.length + ' of ' + gs.length + ' played</span>' +
+      '<span class="chip">' + left.length + ' still in</span>' +
+    '</div></div>';
 
-  h += '<div class="stats">' +
-    '<div class="stat"><b class="num">' + left.length + '</b><span>Still in</span></div>' +
-    '<div class="stat"><b class="num">' + (state.teams.length - left.length) + '</b><span>Eliminated</span></div>' +
-    '<div class="stat"><b class="num">' + done.length + '<span style="font-size:14px;color:var(--mut2)"> / ' + gs.length + '</span></b><span>Games played</span></div>' +
-    '<div class="stat"><b class="num">' + (champ ? '—' : (act ? act.idx : '—')) + '</b><span>Now playing</span></div>' +
-    '</div>';
+  h += '<div class="dash">';
 
-  /* Who is currently in the drop zone, live, while the game is still running. */
-  if (act && !champ) {
-    const p = elimPreview(act);
-    const scored = p.order.filter(o => o.has).length;
-    h += '<div class="card pad" style="margin-bottom:14px">' +
-      '<div class="row"><span class="chip live">Game ' + act.idx + ' in progress</span>' +
-      '<span class="muted" style="font-size:13px">' + label(act) + ' · ' +
-        scored + ' of ' + p.order.length + ' teams scored</span>' +
-      '<span class="sec-head sp" style="margin:0 0 0 auto"><button class="btn sm noprsnt" data-act="go" data-view="games">Enter scores</button></span></div>' +
-      (p.picks.length && scored
-        ? '<div class="row" style="margin-top:11px"><span class="zoneflag">On the chopping block</span>' +
-          p.picks.map(x => '<span class="outpill">' + (x.t.emoji ? esc(x.t.emoji) + ' ' : '') +
-            esc(x.t.name) + ' · <b class="num">' + nfmt(x.v) + '</b></span>').join('') +
-          (p.tie ? '<span class="chip">tied — host decides</span>' : '') + '</div>'
-        : '') +
-      '</div>';
-  }
-
-  /* podium */
-  const top = st.slice(0, 3);
-  const max = Math.max(1, ...st.map(s => Math.abs(s.total)));
-  h += '<div class="podium">' + top.map((s, i) => {
-    const t = s.t, recent = gs.slice(-3);
-    return '<div class="pcard' + (i === 0 ? ' first' : '') + (t.out != null ? ' gone' : '') +
-        '" style="--c:' + esc(t.color) + '">' +
-      '<div class="rk">' + (i + 1) + '</div>' +
-      '<div class="nm">' + dot(t) + (t.emoji ? esc(t.emoji) + ' ' : '') + esc(t.name) + '</div>' +
-      '<div class="tot num">' + nfmt(s.total) + '<small>pts</small></div>' +
-      '<div class="bar"><i style="width:' + Math.max(3, Math.abs(s.total) / max * 100) + '%"></i></div>' +
-      (t.out != null
-        ? '<span class="chip out">Out on game ' + t.out + '</span>'
-        : '<div class="split">' + recent.map(g => {
-            const v = gameScore(g, t.id);
-            return '<div class="g"><b class="num">' + (v.any ? nfmt(v.v) : '–') + '</b><span>G' + g.idx + '</span></div>';
-          }).join('') + '</div>') +
-      '</div>';
-  }).join('') + '</div>';
-
-  /* survival grid */
-  h += '<div class="sec-head"><h2>Every game</h2>' +
-       '<span class="sub">' + (state.rules.basis === 'total' ? 'running total' : 'game score') +
-       ' decides · ' + (state.rules.direction === 'low' ? 'low score wins' : 'high score wins') + '</span></div>';
-  h += '<div class="card scroll"><table class="sgrid"><thead><tr>' +
+  /* ---- the survival grid ---- */
+  h += '<div class="main"><div class="card"><div class="scroll"><table class="sgrid"><thead><tr>' +
     '<th style="width:26px"></th><th>Team</th>' +
     gs.map(g => '<th class="c" title="' + esc(g.name) + '">' + (g.icon ? esc(g.icon) : 'G' + g.idx) +
       (g.status === 'done' ? '' : ' <span style="color:var(--warn)">•</span>') + '</th>').join('') +
@@ -916,8 +910,91 @@ function vBoard(){
         : '<span class="chip out">G' + t.out + '</span>') + '</td></tr>';
   }).join('');
 
-  h += '</tbody></table></div>';
+  h += '</tbody></table></div></div></div>';
+
+  /* ---- rail ---- */
+  h += '<div class="rail">';
+
+  const max = Math.max(1, ...st.map(s => Math.abs(s.total)));
+  if (champ) {
+    h += '<div class="champ" style="--c:' + esc(champ.color) + ';margin:0">' +
+      '<div class="lbl">Last team standing</div>' +
+      '<div class="nm">' + (champ.emoji ? esc(champ.emoji) + ' ' : '') + esc(champ.name) + '</div>' +
+      '<div class="sub">Survived all ' + done.length + ' game' + (done.length === 1 ? '' : 's') +
+        ' · ' + nfmt(totalScore(champ.id)) + ' points</div></div>';
+  } else if (st.length) {
+    const s0 = st[0], t0 = s0.t;
+    h += '<div class="lead first" style="--c:' + esc(t0.color) + '">' +
+      '<div class="cap">Leading</div>' +
+      '<div class="nm">' + dot(t0) + (t0.emoji ? esc(t0.emoji) + ' ' : '') + esc(t0.name) + '</div>' +
+      '<div class="tot num">' + nfmt(s0.total) + '<small>pts</small></div>' +
+      '<div class="bar"><i style="width:' + Math.max(3, Math.abs(s0.total) / max * 100) + '%"></i></div>' +
+      '</div>';
+  }
+
+  /* the chasing pack — enough of the table to read at a glance from the back
+     of the room, without making the rail a second copy of the grid */
+  const chase = st.slice(champ ? 0 : 1, champ ? 5 : 5);
+  if (chase.length) h += '<div class="chase">' + chase.map(s =>
+    '<div class="crow' + (s.t.out != null ? ' gone' : '') + '">' +
+      '<span class="p num">' + s.rank + '</span>' +
+      '<span class="nm">' + dot(s.t) + (s.t.emoji ? esc(s.t.emoji) + ' ' : '') + esc(s.t.name) + '</span>' +
+      (s.t.out != null ? '<span class="chip out">G' + s.t.out + '</span>' : '') +
+      '<span class="v num">' + nfmt(s.total) + '</span></div>').join('') + '</div>';
+
+  h += '<div class="stats">' +
+    '<div class="stat"><b class="num">' + left.length + '</b><span>Still in</span></div>' +
+    '<div class="stat"><b class="num">' + (state.teams.length - left.length) + '</b><span>Eliminated</span></div>' +
+    '<div class="stat"><b class="num">' + done.length + '<span style="font-size:14px;color:var(--mut2)"> / ' + gs.length + '</span></b><span>Games played</span></div>' +
+    '<div class="stat"><b class="num">' + (champ ? '—' : (act ? act.idx : '—')) + '</b><span>Now playing</span></div>' +
+    '</div>';
+
+  /* who is in the drop zone, live, while the game is still running */
+  if (act && !champ) {
+    const p = elimPreview(act);
+    const scored = p.order.filter(o => o.has).length;
+    h += '<div class="panel' + (p.picks.length && scored ? ' warn' : '') + '">' +
+      '<div class="cap">' + (p.picks.length && scored ? 'On the chopping block' : 'Game ' + act.idx) + '</div>' +
+      (p.picks.length && scored
+        ? '<div class="outlist" style="margin:0">' + p.picks.map(x =>
+            '<span class="outpill">' + (x.t.emoji ? esc(x.t.emoji) + ' ' : '') + esc(x.t.name) +
+            ' · <b class="num">' + nfmt(x.v) + '</b></span>').join('') +
+          (p.tie ? '<span class="chip" style="margin-left:8px">tied — host decides</span>' : '') + '</div>'
+        : '<div class="muted" style="font-size:13px">' + scored + ' of ' + p.order.length +
+          ' teams scored in ' + label(act) + '</div>') +
+      '<div class="row noprsnt" style="margin-top:11px"><button class="btn sm" data-act="go" data-view="games">Enter scores</button></div>' +
+      '</div>';
+  }
+
+  h += '</div></div></div></div>';
   return h;
+}
+
+/* The stage is a fixed 1600x900 box scaled to whatever room the page has.
+   Transform does not affect layout, so the wrapper is given the resulting
+   height by hand, and the stage is centred in whatever is left over.        */
+const STAGE_W = 1600, STAGE_H = 900;
+function stageFits(){
+  return document.body.classList.contains('present') ||
+         (window.innerWidth >= 900 && window.innerHeight >= 500);
+}
+function fitStage(){
+  const wrap = $('#stagewrap'), st = $('#stage');
+  if (!wrap || !st) return;
+  if (!stageFits()) {
+    wrap.classList.remove('on');
+    wrap.style.height = ''; st.style.transform = ''; st.style.left = '';
+    return;
+  }
+  wrap.classList.add('on');
+  const availW = wrap.clientWidth;
+  const top    = wrap.getBoundingClientRect().top;
+  const pad    = document.body.classList.contains('present') ? 0 : 16;
+  const availH = Math.max(240, window.innerHeight - top - pad);
+  const scale  = Math.min(availW / STAGE_W, availH / STAGE_H);
+  st.style.transform = 'scale(' + scale + ')';
+  st.style.left = Math.max(0, (availW - STAGE_W * scale) / 2) + 'px';
+  wrap.style.height = (STAGE_H * scale) + 'px';
 }
 
 /* ---------- games ---------- */
@@ -1509,7 +1586,10 @@ $('#presentBtn').addEventListener('click', () => {
     view = 'board'; render();
     if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
     toast('Present mode — press the button again to exit');
-  } else if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  } else {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    render();
+  }
 });
 
 /* toast + confetti */
@@ -1545,6 +1625,7 @@ if (fromLink) toast(cloud.pin ? 'Connected — scoring unlocked on this device'
                               : 'Connected to the shared board');
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 window.addEventListener('online', tick);
+window.addEventListener('resize', () => { if (view === 'board') fitStage(); });
 </script>
 </body>
 </html>

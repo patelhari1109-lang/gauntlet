@@ -26,11 +26,19 @@ on — locking a game creates the next one for you.
 
 ## What it does
 
-**Standings** — the champion banner once it's over, a podium, and a full
-survival grid: teams down the side, games across the top, every score in its
-cell with 💀 marking where each team went out. Best and worst in each game are
-colour-coded, so a column reads at a glance. The **⛶** button strips the chrome
-and goes fullscreen for a projector.
+**Standings** — a **16:9 dashboard**, built for the screen in the corner of the
+room. The survival grid takes the floor: teams down the side, games across the
+top, every score in its cell with 💀 marking where each team went out. Best and
+worst in each game are colour-coded, so a column reads at a glance. A rail down
+the right carries the leader (or the champion), the chasing pack, the counts,
+and whoever is currently on the chopping block.
+
+It is laid out once at 1600×900 and then scaled to fit whatever it is shown on,
+so the whole board is always on screen with nothing cropped and nothing to
+scroll. The **⛶** button strips the chrome and goes fullscreen for a projector.
+Narrow screens drop the 16:9 frame and stack the same panels normally — a
+letterboxed strip on a phone would be unreadable. Past about fifteen teams the
+grid starts scrolling inside its own panel rather than overflowing the frame.
 
 **Games** — a card per game, listing every surviving team with its score and
 big `−` / `+` buttons. Rows sort live into running order with a position number,
@@ -155,11 +163,13 @@ cd ~/projects/gauntlet
 /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc test.js
 ```
 
-230 assertions covering the scoring engine, every elimination rule, lock and
+251 assertions covering the scoring engine, every elimination rule, lock and
 reopen round-trips, a full event played end to end, the renumbering that follows
 a deleted game, upgrading a saved v1 (rounds-based) event, database row mapping,
-and a render pass over every view that catches stray `undefined`s and unclosed
-tags.
+a render pass over every view that catches stray `undefined`s and unclosed tags,
+and the 16:9 stage arithmetic — that the board scales to the limiting dimension,
+centres in the slack, subtracts whatever sits above it, and drops the frame
+entirely on a phone.
 
 The SQL is validated by running `supabase-setup.sql` against a throwaway
 `postgres:16` container and exercising every function as the `anon` role — both

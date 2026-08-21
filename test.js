@@ -32,6 +32,12 @@ El.prototype.closest = function(){ return null; };
 El.prototype.querySelector = function(){ return null; };
 El.prototype.querySelectorAll = function(){ return []; };
 El.prototype.setAttribute = function(){};
+/* layout geometry the 16:9 stage reads; tests drive these directly */
+var _geom = { top: 0, width: 1200 };
+Object.defineProperty(El.prototype, 'clientWidth', { get: function(){ return _geom.width; } });
+El.prototype.getBoundingClientRect = function(){
+  return { top: _geom.top, left: 0, width: _geom.width, height: 0, bottom: 0, right: _geom.width };
+};
 
 var _els = {};
 var document = {
@@ -53,7 +59,8 @@ var localStorage = {
 var location = { hash: '', pathname: '/index.html', origin: 'http://x', search: '' };
 var history = { replaceState: function(){} };
 var navigator = { clipboard: null };
-var window = { scrollTo: function(){}, addEventListener: function(){}, innerHeight: 800, prompt: function(){} };
+var window = { scrollTo: function(){}, addEventListener: function(){}, prompt: function(){},
+               innerWidth: 1440, innerHeight: 900 };
 var setTimeout = function(){ return 0; };
 var setInterval = function(){ return 0; };
 var fetch = function(){ return { then: function(){ return { then: function(){} }; } }; };
@@ -74,6 +81,9 @@ var src  = html.slice(open, shut);
   ' gamePayload: gamePayload, rowToGame: rowToGame,' +
   ' vBoard: vBoard, vGames: vGames, vTeams: vTeams, vSettings: vSettings,' +
   ' gameCard: gameCard, lockModal: lockModal, openScorer: openScorer,' +
+  ' fitStage: fitStage, stageFits: stageFits,' +
+  ' stageEl: function(){ return document.querySelector("#stage"); },' +
+  ' wrapEl: function(){ return document.querySelector("#stagewrap"); },' +
   ' getModal: function(){ return document.querySelector("#modal").innerHTML; },' +
   ' getScorer: function(){ return document.querySelector("#scorer").innerHTML; },' +
   ' setState: function(s){ state = s; }, getState: function(){ return state; } };'))
@@ -457,6 +467,69 @@ G('render');
   A.lockGame(play([10, 5]), ['t1']);
   ok(A.vBoard().indexOf('Last team standing') >= 0, 'the champion banner appears at the end');
   clean(A.vBoard(), 'the finished board');
+})();
+
+/* -------------------------------------------------------------- 16:9 stage */
+/* The dashboard is drawn once at 1600x900 and scaled to whatever screen it
+   lands on. This maths decides whether a projector shows the whole board or
+   crops it, so it is checked directly rather than eyeballed. */
+G('16:9 stage');
+(function(){
+  fresh(9);
+  A.lockGame(play([30,20,50,10,40,25,35,15,45], 'Tug of war'), ['t3']);
+
+  var b = A.vBoard();
+  ok(b.indexOf('id="stagewrap"') >= 0, 'the board renders inside a stage wrapper');
+  ok(b.indexOf('id="stage"') >= 0, 'and a stage');
+  ok(b.indexOf('class="dash"') >= 0, 'the dashboard splits into main and rail');
+  ok(b.indexOf('class="rail"') >= 0, 'the rail is present');
+  ok(b.indexOf('sgrid') >= 0, 'the survival grid is on the stage');
+
+  function fitWith(winW, winH, wrapW, top){
+    window.innerWidth = winW; window.innerHeight = winH;
+    _geom.width = wrapW; _geom.top = top || 0;
+    document.querySelector('#view').innerHTML = A.vBoard();
+    A.fitStage();
+    return { wrap: A.wrapEl(), st: A.stageEl() };
+  }
+
+  // exactly 16:9 once the 16px of padding below is allowed for
+  var r = fitWith(1600, 916, 1600, 0);
+  ok(r.wrap.classList.contains('on'), 'a wide window turns the stage on');
+  eq(r.st.style.transform, 'scale(1)', 'a 1600x900 area needs no scaling');
+  eq(r.wrap.style.height, '900px', 'and the wrapper takes the full stage height');
+  eq(r.st.style.left, '0px', 'with nothing left over to centre');
+
+  // wider than 16:9 — height is the limit and the slack is split evenly
+  r = fitWith(2400, 916, 2400, 0);
+  eq(r.st.style.transform, 'scale(1)', 'extra width alone does not scale the stage past its height');
+  eq(r.st.style.left, '400px', 'and the leftover width centres the stage');
+
+  // taller than 16:9 — width is the limit
+  r = fitWith(1000, 2000, 800, 0);
+  eq(r.st.style.transform, 'scale(0.5)', 'a tall, narrow area scales to fit the width');
+  eq(r.wrap.style.height, '450px', 'and the wrapper shrinks to match');
+
+  // whatever sits above the stage is subtracted from the height it may use:
+  // 836 tall - 100 of header - 16 of padding = 720, which is 0.8 of 900
+  r = fitWith(3200, 836, 3200, 100);
+  eq(r.st.style.transform, 'scale(0.8)', 'the header above the stage eats into its height');
+  eq(r.wrap.style.height, '720px', 'and the wrapper matches the scaled height');
+
+  // a phone drops the stage rather than letterboxing it into unreadability
+  r = fitWith(420, 780, 420, 0);
+  ok(!r.wrap.classList.contains('on'), 'a narrow screen turns the stage off');
+  eq(r.st.style.transform, '', 'and clears the scaling');
+  eq(r.wrap.style.height, '', 'and the forced height');
+
+  // present mode always stages, whatever the window is doing
+  document.body.classList.add('present');
+  ok(A.stageFits(), 'present mode stages regardless of window size');
+  r = fitWith(420, 300, 420, 0);
+  ok(r.wrap.classList.contains('on'), 'so a projector at any size still gets the 16:9 frame');
+  eq(r.st.style.transform, 'scale(0.2625)', 'scaled to exactly what it was given');
+  document.body.classList.remove('present');
+  window.innerWidth = 1440; window.innerHeight = 900; _geom.width = 1200; _geom.top = 0;
 })();
 
 print('───────────────────');
