@@ -120,8 +120,10 @@ returns. Rapid taps on one cell coalesce into a single write.
 3. In Supabase: **SQL Editor → New query**, paste the whole file, **Run**.
 4. In the app: **Settings → Shared database**. Paste your **Project URL** and
    **anon public key** (Supabase → Project Settings → API), plus the passcode.
-5. Hit **Test connection** — it checks reachability, tables, functions and the
-   passcode one by one and tells you exactly what is missing.
+5. Hit **Test connection** — it checks reachability, tables, functions, the
+   schema version and the passcode one by one and tells you exactly what is
+   missing. It stays available after you connect, so it can diagnose a board
+   that stopped syncing as well as one that never started.
 6. **Connect**. If you already entered teams on this device, hit **Upload this
    device's data** once to push them up.
 
@@ -147,6 +149,23 @@ passing a wrong passcode to any write function all fail.
 
 The sync pill in the header shows the state: `○ Local`, `👁 View` (connected,
 read-only), `● Live` (scoring unlocked), `◍` (syncing), `⚠` (queued / offline).
+Tap it for the current message.
+
+#### If it will not connect
+
+The app names the specific failure rather than guessing. In order of how often
+they actually happen:
+
+| What it says | What to do |
+| --- | --- |
+| *Connected, but the sync functions are missing* | The project is reachable and the key works — you have not run `supabase-setup.sql` yet, or it errored partway. Run the whole file. |
+| *Tables not found* | Same fix: run `supabase-setup.sql`. |
+| *The database is out of date* / *Schema is the older rounds-based one* | Re-run `supabase-setup.sql`; it upgrades in place and keeps your scores. |
+| *The key was rejected* | Use the **anon public** key from Project Settings → API, not the service role key. |
+| *Cannot reach …* | The URL or the network. Paste the **Project URL** from Project Settings → API. A missing `https://` is fixed for you, as is a trailing `/rest/v1`. |
+
+**Retry now** forces an immediate sync attempt rather than waiting for the next
+poll.
 
 ---
 

@@ -81,7 +81,7 @@ var src  = html.slice(open, shut);
   ' gamePayload: gamePayload, rowToGame: rowToGame,' +
   ' vBoard: vBoard, vGames: vGames, vTeams: vTeams, vSettings: vSettings,' +
   ' gameCard: gameCard, lockModal: lockModal, openScorer: openScorer,' +
-  ' fitStage: fitStage, stageFits: stageFits,' +
+  ' fitStage: fitStage, stageFits: stageFits, normUrl: normUrl,' +
   ' stageEl: function(){ return document.querySelector("#stage"); },' +
   ' wrapEl: function(){ return document.querySelector("#stagewrap"); },' +
   ' getModal: function(){ return document.querySelector("#modal").innerHTML; },' +
@@ -530,6 +530,28 @@ G('16:9 stage');
   eq(r.st.style.transform, 'scale(0.2625)', 'scaled to exactly what it was given');
   document.body.classList.remove('present');
   window.innerWidth = 1440; window.innerHeight = 900; _geom.width = 1200; _geom.top = 0;
+})();
+
+/* --------------------------------------------------------- the project URL */
+/* A URL pasted without a scheme is resolved against the page's own host, so
+   every request 404s and the app looks unreachable when the settings are
+   fine. These are the shapes people actually paste. */
+G('project URL');
+(function(){
+  eq(A.normUrl('https://abcd.supabase.co'), 'https://abcd.supabase.co', 'a clean URL is left alone');
+  eq(A.normUrl('abcd.supabase.co'), 'https://abcd.supabase.co', 'a missing scheme is added');
+  eq(A.normUrl('  abcd.supabase.co  '), 'https://abcd.supabase.co', 'surrounding whitespace is trimmed');
+  eq(A.normUrl('https://abcd.supabase.co/'), 'https://abcd.supabase.co', 'a trailing slash is dropped');
+  eq(A.normUrl('https://abcd.supabase.co///'), 'https://abcd.supabase.co', 'and several of them');
+  eq(A.normUrl('https://abcd.supabase.co/rest/v1'), 'https://abcd.supabase.co',
+     'the REST path from the API docs is stripped, or every call would double it');
+  eq(A.normUrl('https://abcd.supabase.co/rest/v1/'), 'https://abcd.supabase.co',
+     'with or without its trailing slash');
+  eq(A.normUrl('HTTPS://abcd.supabase.co'), 'https://abcd.supabase.co', 'a capitalised scheme is lowered');
+  eq(A.normUrl('http://localhost:54321'), 'http://localhost:54321', 'a local project keeps http and its port');
+  eq(A.normUrl('abcd .supabase.co'), 'https://abcd.supabase.co', 'a stray space inside is removed');
+  eq(A.normUrl(''), '', 'an empty value stays empty');
+  eq(A.normUrl(null), '', 'and so does nothing at all');
 })();
 
 print('───────────────────');

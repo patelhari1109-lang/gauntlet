@@ -448,6 +448,33 @@ const canEdit = () => !online() || !!cloud.pin;
 const saveCloud  = () => localStorage.setItem(CKEY, JSON.stringify(cloud));
 const saveOutbox = () => localStorage.setItem(OKEY, JSON.stringify(outbox));
 
+/* People paste the project URL out of the Supabase dashboard, an email, or a
+   phone keyboard that helpfully capitalised it. Without a scheme the browser
+   treats it as a path on the page's own host and every request 404s against
+   GitHub Pages, which looks exactly like an unreachable database — so the
+   cleanup happens here, once, for every way a URL can get in.               */
+function normUrl(u){
+  u = String(u == null ? '' : u).trim().replace(/\s+/g, '');
+  if (!u) return '';
+  u = u.replace(/^https?:\/\//i, m => m.toLowerCase());
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  u = u.replace(/\/+$/, '');
+  u = u.replace(/\/rest\/v1$/i, '');       // pasted from the API docs
+  return u.replace(/\/+$/, '');
+}
+
+/* What actually went wrong, in words the person can act on. */
+function apiFail(r){
+  if (r.status === 401 || r.status === 403)
+    return 'The key was rejected — copy the anon public key from Project Settings → API';
+  if (r.status === 404)
+    return 'Tables not found — run supabase-setup.sql in the Supabase SQL editor';
+  if (r.status === 400)
+    return 'The database is out of date — re-run supabase-setup.sql to upgrade it';
+  return 'The project answered ' + r.status;
+}
+const hostOf = () => String(cloud.url || '').replace(/^https?:\/\//, '') || 'the database';
+
 function api(path, opts){
   return fetch(String(cloud.url).replace(/\/+$/, '') + '/rest/v1/' + path, Object.assign({
     headers: { apikey: cloud.key, Authorization: 'Bearer ' + cloud.key,
@@ -552,7 +579,7 @@ async function pull(){
     save();
     if (net.state !== 'busy') { net.state = 'ok'; net.msg = 'Synced'; }
   } catch (e) {
-    net.state = 'error'; net.msg = 'Cannot reach the database';
+    net.state = 'error'; net.msg = 'Cannot reach ' + hostOf() + ' — check the URL and your connection';
   }
   pulling = false; netPaint();
   if (curGame && !$('#scorer').classList.contains('hide')) paintScorer(); else render();
@@ -563,12 +590,23 @@ async function tick(){
   await flush();
   try {
     const r = await rpc('gauntlet_revision');
-    if (!r.ok) throw new Error('revision');
+    if (!r.ok) {
+      // the project answered, so this is a setup problem, not a network one
+      net.state = 'error';
+      net.msg = r.status === 404
+        ? 'Connected, but the sync functions are missing — run supabase-setup.sql'
+        : apiFail(r);
+      netPaint(); return;
+    }
     const rev = JSON.stringify(await r.json());
     if (rev !== net.rev) { net.rev = rev; await pull(); }
     else if (net.state === 'error' && !outbox.length) { net.state = 'ok'; net.msg = 'Synced'; netPaint(); }
   } catch (e) {
-    if (!outbox.length) { net.state = 'error'; net.msg = 'Cannot reach the database'; netPaint(); }
+    if (!outbox.length) {
+      net.state = 'error';
+      net.msg = 'Cannot reach ' + hostOf() + ' — check the URL and your connection';
+      netPaint();
+    }
   }
 }
 
@@ -598,7 +636,7 @@ function applyHashCfg(){
   try {
     const o = JSON.parse(decodeURIComponent(escape(atob(m[1]))));
     if (!o.u || !o.k) return false;
-    cloud.url = String(o.u).replace(/\/+$/, ''); cloud.key = o.k;
+    cloud.url = normUrl(o.u); cloud.key = String(o.k || '').trim();
     if (o.p) cloud.pin = o.p;
     saveCloud();
     history.replaceState(null, '', location.pathname + location.search);
@@ -656,10 +694,15 @@ async function uploadLocal(){
 
 async function connTest(){
   const box = $('#ctest'); if (!box) return;
-  const url = ($('#cu').value || '').trim(), key = ($('#ck').value || '').trim();
+  // usable both before connecting (reads the form) and after (reads the saved
+  // settings), because "it stopped working" needs diagnosing far more often
+  // than "it never started"
+  const url = $('#cu') ? normUrl($('#cu').value) : cloud.url;
+  const key = $('#ck') ? ($('#ck').value || '').trim() : cloud.key;
   if (!url || !key) { box.innerHTML = '<div class="tline bad">✗ Fill in both the project URL and the anon key.</div>'; return; }
   const prev = { url: cloud.url, key: cloud.key };
   cloud.url = url; cloud.key = key;
+  box.innerHTML = '<div class="tline">◍ Testing ' + esc(url.replace(/^https?:\/\//, '')) + '…</div>';
   const lines = [];
   const put = (ok, t) => { lines.push('<div class="tline ' + (ok ? 'good' : 'bad') + '">' + (ok ? '✓' : '✗') + ' ' + t + '</div>');
     box.innerHTML = lines.join(''); };
@@ -673,6 +716,14 @@ async function connTest(){
       ? 'Config row found.' : 'Config row missing — re-run the seed at the end of supabase-setup.sql.');
     const rv = await rpc('gauntlet_revision');
     put(rv.ok, rv.ok ? 'Sync functions installed.' : 'Functions missing — re-run supabase-setup.sql.');
+
+    // a project set up against the first version of this app answers every
+    // check above and still cannot be written to, so name that case exactly
+    const sch = await api('gauntlet_games?select=idx&limit=1');
+    const tsc = await api('gauntlet_teams?select=out_game&limit=1');
+    put(sch.ok && tsc.ok, sch.ok && tsc.ok
+      ? 'Schema is up to date.'
+      : 'Schema is the older rounds-based one — re-run supabase-setup.sql to upgrade it (your scores are kept).');
     const pin = ($('#cp').value || '').trim();
     if (pin) {
       const vr = await rpc('gauntlet_verify_pin', { p_pin: pin });
@@ -1204,6 +1255,11 @@ function vSettings(){
       (cloud.pin ? '<button class="btn" data-act="scorerlink">Copy scorer link</button>' : '') +
       '<button class="btn" data-act="upload">Upload this device’s data</button>' +
       '<button class="btn gho" data-act="disconnect">Disconnect</button></div>' +
+      '<div class="tline' + (net.state === 'error' ? ' bad' : net.state === 'ok' ? ' good' : '') + '">' +
+        (net.state === 'error' ? '✗ ' : net.state === 'ok' ? '✓ ' : '○ ') + esc(net.msg) + '</div>' +
+      '<div id="ctest"></div>' +
+      '<div class="row"><button class="btn" data-act="ctest">Test connection</button>' +
+      '<button class="btn gho" data-act="retry">Retry now</button></div>' +
       '<p class="muted" style="margin:0;font-size:12.5px">The watch link carries the project URL and key only — anyone opening it can see the board but not touch it. The scorer link also carries the passcode, so send it only to the people running the games.</p>';
   }
   h += '</div>';
@@ -1483,10 +1539,11 @@ document.addEventListener('click', e => {
 
     /* ---- cloud ---- */
     case 'ctest': connTest(); break;
+    case 'retry': net.rev = ''; tick(); toast('Retrying…'); break;
     case 'connect': {
       const url = ($('#cu').value || '').trim(), key = ($('#ck').value || '').trim();
       if (!url || !key) { toast('Project URL and anon key are both needed'); break; }
-      cloud.url = url.replace(/\/+$/, ''); cloud.key = key;
+      cloud.url = normUrl(url); cloud.key = key;
       const pin = ($('#cp').value || '').trim(); if (pin) cloud.pin = pin;
       saveCloud(); net.rev = ''; render(); netPaint(); tick();
       toast('Connected'); break;
